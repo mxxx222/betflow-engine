@@ -118,12 +118,14 @@ NODE_ENV=production
 ## 🔑 API Keys Setup
 
 ### 1. OddsAPI (Primary Provider)
+
 1. Go to https://the-odds-api.com/
 2. Sign up for free account
 3. Get API key from dashboard
 4. Set `PROVIDERS_ODDS_API_KEY` in environment variables
 
 ### 2. SportsMonks (Backup Provider)
+
 1. Go to https://sportmonks.com/
 2. Sign up for free account
 3. Get API key from dashboard
@@ -132,17 +134,20 @@ NODE_ENV=production
 ## 🚀 Deployment Process
 
 ### 1. Deploy Services in Order
+
 1. **Database first**: PostgreSQL + Redis
 2. **API second**: betflow-api
 3. **Worker third**: betflow-worker
 4. **Web last**: betflow-web
 
 ### 2. Wait for Deployments
+
 - Each service takes 5-10 minutes to deploy
 - Check logs for any errors
 - Verify environment variables are set
 
 ### 3. Test Endpoints
+
 ```bash
 # Health check
 curl https://betflow-api.onrender.com/health
@@ -167,18 +172,21 @@ After deployment, you'll have:
 ## 🔄 Post-Deployment Setup
 
 ### 1. Initialize Database
+
 ```bash
 # Run migrations (should happen automatically)
 # Check API logs for migration status
 ```
 
 ### 2. Start Data Collection
+
 1. Go to n8n worker: `https://betflow-worker.onrender.com`
 2. Login with admin credentials
 3. Import workflows from `worker/` directory
 4. Activate football odds collection workflow
 
 ### 3. Verify Data Flow
+
 1. Check API logs for odds collection
 2. Verify signals are being generated
 3. Test dashboard displays data
@@ -186,12 +194,14 @@ After deployment, you'll have:
 ## 🧪 Testing MVP
 
 ### 1. Run Backtest
+
 ```bash
 # SSH into API service or run locally
 python scripts/backtest_football_ou25.py
 ```
 
 ### 2. Check Performance
+
 ```bash
 # Get system status
 curl https://betflow-api.onrender.com/mvp/status
@@ -208,16 +218,19 @@ curl https://betflow-api.onrender.com/mvp/risk/limits
 ### Common Issues
 
 1. **Build Failures**
+
    - Check Python/Node versions
    - Verify all dependencies
    - Check build logs for errors
 
 2. **Database Connection**
+
    - Verify DATABASE_URL format
    - Check database is running
    - Test connection from API service
 
 3. **API Keys Not Working**
+
    - Verify keys are correct
    - Check provider documentation
    - Test keys independently
@@ -243,6 +256,7 @@ render logs --service betflow-redis
 ## 📈 Expected Performance
 
 ### MVP Metrics
+
 - **Cold Start**: 30-60 seconds
 - **API Response**: <500ms
 - **Data Collection**: Every 5 minutes
@@ -250,8 +264,9 @@ render logs --service betflow-redis
 - **ROI Target**: 2-5% monthly
 
 ### Resource Usage
+
 - **API**: 512MB RAM, 1 CPU
-- **Worker**: 512MB RAM, 1 CPU  
+- **Worker**: 512MB RAM, 1 CPU
 - **Web**: 256MB RAM, 1 CPU
 - **Database**: 1GB storage
 - **Redis**: 25MB storage
@@ -259,6 +274,7 @@ render logs --service betflow-redis
 ## 🎯 Success Criteria
 
 ### Deployment Success
+
 - ✅ All services deployed
 - ✅ Database connected
 - ✅ API responding
@@ -266,6 +282,7 @@ render logs --service betflow-redis
 - ✅ Web dashboard accessible
 
 ### MVP Success
+
 - ✅ Odds collected every 5 minutes
 - ✅ Signals generated every 10 minutes
 - ✅ Backtest shows 5%+ ROI

@@ -5,11 +5,12 @@
 ### Step 1: Get API Keys (2 minutes)
 
 1. **OddsAPI** (Primary provider)
+
    - Go to: https://the-odds-api.com/
    - Sign up (free tier available)
    - Copy your API key
 
-2. **SportsMonks** (Backup provider)  
+2. **SportsMonks** (Backup provider)
    - Go to: https://sportmonks.com/
    - Sign up (free tier available)
    - Copy your API key
@@ -22,18 +23,21 @@
 4. **Create Services** (in this order):
 
 #### A. PostgreSQL Database
+
 - **Type**: PostgreSQL
 - **Name**: `betflow-postgres`
 - **Plan**: Starter (Free)
 - **Database Name**: `betflow`
 - **User**: `betflow_user`
 
-#### B. Redis Database  
+#### B. Redis Database
+
 - **Type**: Redis
 - **Name**: `betflow-redis`
 - **Plan**: Starter (Free)
 
 #### C. Web Service (API)
+
 - **Type**: Web Service
 - **Name**: `betflow-api`
 - **Environment**: Python 3
@@ -49,6 +53,7 @@
   ```
 
 #### D. Background Worker
+
 - **Type**: Background Worker
 - **Name**: `betflow-worker`
 - **Environment**: Python 3
@@ -63,6 +68,7 @@
   ```
 
 #### E. Web Service (Frontend)
+
 - **Type**: Web Service
 - **Name**: `betflow-web`
 - **Environment**: Node
@@ -82,6 +88,7 @@
 For each service, add these environment variables:
 
 #### For API Service (betflow-api):
+
 ```bash
 DATABASE_URL=postgresql://betflow_user:password@betflow-postgres:5432/betflow
 REDIS_URL=redis://betflow-redis:6379
@@ -96,6 +103,7 @@ LOG_LEVEL=INFO
 ```
 
 #### For Worker Service (betflow-worker):
+
 ```bash
 DATABASE_URL=postgresql://betflow_user:password@betflow-postgres:5432/betflow
 REDIS_URL=redis://betflow-redis:6379
@@ -110,6 +118,7 @@ N8N_BASIC_AUTH_PASSWORD=your_n8n_password
 ```
 
 #### For Web Service (betflow-web):
+
 ```bash
 NEXT_PUBLIC_API_URL=https://betflow-api.onrender.com
 NODE_ENV=production
@@ -118,21 +127,25 @@ NODE_ENV=production
 ## 🧪 Test Your Deployment
 
 ### 1. Health Check
+
 ```bash
 curl https://betflow-api.onrender.com/health
 ```
 
 ### 2. MVP Status
+
 ```bash
 curl https://betflow-api.onrender.com/mvp/status
 ```
 
 ### 3. Football Events
+
 ```bash
 curl https://betflow-api.onrender.com/mvp/events/football
 ```
 
 ### 4. Backtest Results
+
 ```bash
 curl https://betflow-api.onrender.com/mvp/backtest/results
 ```
@@ -140,17 +153,20 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
 ## 📊 Expected Results
 
 ### Service URLs
+
 - **API**: `https://betflow-api.onrender.com`
 - **Dashboard**: `https://betflow-web.onrender.com`
 - **Worker**: `https://betflow-worker.onrender.com`
 
 ### Performance
+
 - **Cold Start**: 30-60 seconds
 - **API Response**: <500ms
 - **Data Collection**: Every 5 minutes
 - **Signal Generation**: Every 10 minutes
 
 ### ROI Target
+
 - **Conservative**: 2-3% monthly
 - **Moderate**: 3-5% monthly
 - **Focus**: Football Over/Under 2.5 only
@@ -158,6 +174,7 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
 ## 🎯 What You'll Get
 
 ### Analytics Dashboard
+
 - Real-time football odds
 - Over/Under 2.5 market focus
 - Edge analysis and signals
@@ -165,12 +182,14 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
 - Performance tracking
 
 ### Automated Data Collection
+
 - Odds from multiple providers
 - Signal computation every 10 minutes
 - Risk monitoring and alerts
 - Conservative staking rules
 
 ### Backtesting System
+
 - 2-week historical analysis
 - League-specific performance
 - ROI reporting per league
@@ -189,11 +208,13 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
 ### Common Issues
 
 1. **Build Failures**
+
    - Check Python/Node versions
    - Verify dependencies
    - Check build logs
 
 2. **Database Connection**
+
    - Verify DATABASE_URL format
    - Check database is running
    - Test connection
@@ -204,6 +225,7 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
    - Test keys independently
 
 ### Debug Commands
+
 ```bash
 # Check service logs in Render dashboard
 # Look for errors in build/deploy logs
@@ -213,7 +235,7 @@ curl https://betflow-api.onrender.com/mvp/backtest/results
 ## 📈 Next Steps
 
 1. **Monitor Performance**: Check logs and metrics
-2. **Run Backtest**: Validate strategy performance  
+2. **Run Backtest**: Validate strategy performance
 3. **Adjust Risk Limits**: Based on backtest results
 4. **Scale if Needed**: Upgrade plans for higher load
 
