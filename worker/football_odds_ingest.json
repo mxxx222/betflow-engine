@@ -1,0 +1,511 @@
+{
+  "name": "Football OU 2.5 Odds Ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://betflow-api.onrender.com/v1/events",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "sport",
+                "value": "football"
+              },
+              {
+                "name": "market",
+                "value": "over_under_2_5"
+              },
+              {
+                "name": "leagues",
+                "value": "premier-league,championship,bundesliga,serie-a,la-liga,ligue-1"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fetch-events",
+      "name": "Fetch Football Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.data.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-events",
+      "name": "Check Events Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.the-odds-api.com/v4/sports/soccer_epl/odds",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "apiKey",
+                "value": "={{ $vars.ODDS_API_KEY }}"
+              },
+              {
+                "name": "regions",
+                "value": "uk,eu"
+              },
+              {
+                "name": "markets",
+                "value": "totals"
+              },
+              {
+                "name": "oddsFormat",
+                "value": "decimal"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fetch-premier-league",
+      "name": "Fetch Premier League Odds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.the-odds-api.com/v4/sports/soccer_championship/odds",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "apiKey",
+                "value": "={{ $vars.ODDS_API_KEY }}"
+              },
+              {
+                "name": "regions",
+                "value": "uk,eu"
+              },
+              {
+                "name": "markets",
+                "value": "totals"
+              },
+              {
+                "name": "oddsFormat",
+                "value": "decimal"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fetch-championship",
+      "name": "Fetch Championship Odds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.the-odds-api.com/v4/sports/soccer_germany_bundesliga/odds",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "apiKey",
+                "value": "={{ $vars.ODDS_API_KEY }}"
+              },
+              {
+                "name": "regions",
+                "value": "uk,eu"
+              },
+              {
+                "name": "markets",
+                "value": "totals"
+              },
+              {
+                "name": "oddsFormat",
+                "value": "decimal"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fetch-bundesliga",
+      "name": "Fetch Bundesliga Odds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "combine-odds",
+      "name": "Combine All Odds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and normalize football odds data\nconst processedOdds = [];\n\nfor (const item of $input.all()) {\n  const oddsData = item.json;\n  \n  if (Array.isArray(oddsData)) {\n    for (const fixture of oddsData) {\n      // Extract Over/Under 2.5 odds\n      for (const bookmaker of fixture.bookmakers || []) {\n        for (const market of bookmaker.markets || []) {\n          if (market.key === 'totals') {\n            let overOdds = null;\n            let underOdds = null;\n            \n            for (const outcome of market.outcomes || []) {\n              if (outcome.name === 'Over 2.5') {\n                overOdds = outcome.price;\n              } else if (outcome.name === 'Under 2.5') {\n                underOdds = outcome.price;\n              }\n            }\n            \n            if (overOdds && underOdds) {\n              processedOdds.push({\n                match_id: `odds_api_${fixture.id}`,\n                home_team: fixture.home_team,\n                away_team: fixture.away_team,\n                league: fixture.sport_key.replace('soccer_', ''),\n                start_time: fixture.commence_time,\n                over_2_5_odds: overOdds,\n                under_2_5_odds: underOdds,\n                bookmaker: bookmaker.title,\n                last_updated: new Date().toISOString()\n              });\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nreturn processedOdds.map(odds => ({ json: odds }));"
+      },
+      "id": "process-odds",
+      "name": "Process & Normalize Odds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://betflow-api.onrender.com/v1/webhooks/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-API-Key",
+              "value": "={{ $vars.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "provider",
+              "value": "odds_api"
+            },
+            {
+              "name": "market",
+              "value": "over_under_2_5"
+            },
+            {
+              "name": "data",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      },
+      "id": "store-odds",
+      "name": "Store Odds in Database",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://betflow-api.onrender.com/v1/signals/compute",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-API-Key",
+              "value": "={{ $vars.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "market",
+              "value": "over_under_2_5"
+            },
+            {
+              "name": "sport",
+              "value": "football"
+            }
+          ]
+        }
+      },
+      "id": "compute-signals",
+      "name": "Compute Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-signals",
+      "name": "Check Signals Generated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🎯 Football OU 2.5 signals generated successfully\\n📊 Market: Over/Under 2.5\\n⚽ Sport: Football\\n🕐 Time: {{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "notify-success",
+      "name": "Notify Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2220, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "❌ Football OU 2.5 signal generation failed\\n📊 Market: Over/Under 2.5\\n⚽ Sport: Football\\n🕐 Time: {{ new Date().toISOString() }}\\n🔍 Check logs for details"
+            }
+          ]
+        }
+      },
+      "id": "notify-error",
+      "name": "Notify Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2220, 400]
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Football Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Football Events": {
+      "main": [
+        [
+          {
+            "node": "Check Events Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Events Found": {
+      "main": [
+        [
+          {
+            "node": "Fetch Premier League Odds",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Championship Odds",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Bundesliga Odds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Premier League Odds": {
+      "main": [
+        [
+          {
+            "node": "Combine All Odds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Championship Odds": {
+      "main": [
+        [
+          {
+            "node": "Combine All Odds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Bundesliga Odds": {
+      "main": [
+        [
+          {
+            "node": "Combine All Odds",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Combine All Odds": {
+      "main": [
+        [
+          {
+            "node": "Process & Normalize Odds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Normalize Odds": {
+      "main": [
+        [
+          {
+            "node": "Store Odds in Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Odds in Database": {
+      "main": [
+        [
+          {
+            "node": "Compute Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Signals": {
+      "main": [
+        [
+          {
+            "node": "Check Signals Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Signals Generated": {
+      "main": [
+        [
+          {
+            "node": "Notify Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

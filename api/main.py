@@ -32,6 +32,7 @@ from .providers.base import OddsProvider
 from .providers.local_csv import LocalCSVProvider
 from .providers.odds_api import OddsAPIProvider
 from .providers.sports_monks import SportsMonksProvider
+from .mvp_endpoints import router as mvp_router
 
 # Configure structured logging
 structlog.configure(
@@ -141,6 +142,9 @@ app.add_middleware(
 
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(AuditMiddleware)
+
+# Include MVP router
+app.include_router(mvp_router, prefix="/mvp", tags=["mvp"])
 
 # Health check endpoint
 @app.get("/health", response_model=HealthResponse, tags=["health"])
