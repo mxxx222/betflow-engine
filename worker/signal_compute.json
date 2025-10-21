@@ -1,0 +1,473 @@
+{
+  "name": "Signal Compute Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/v1/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "scheduled"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-scheduled-events",
+      "name": "Fetch Scheduled Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-events",
+      "name": "Check Events",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "split-events",
+      "name": "Split Events",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/v1/odds",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "event_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-odds-for-event",
+      "name": "Fetch Odds for Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-odds-available",
+      "name": "Check Odds Available",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/internal/compute_signals",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event_ids",
+              "value": "=[{{ $('Split Events').item.json.id }}]"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "compute-signals",
+      "name": "Compute Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.signals_generated }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-signals-generated",
+      "name": "Check Signals Generated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/v1/signals/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "min_edge",
+              "value": "0.05"
+            },
+            {
+              "name": "status",
+              "value": "active"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-recent-signals",
+      "name": "Fetch Recent Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2000, 200]
+    },
+    {
+      "parameters": {
+        "message": "New analytics signals generated",
+        "additionalFields": {
+          "attachments": [
+            {
+              "color": "good",
+              "title": "Analytics Signals Summary",
+              "fields": [
+                {
+                  "title": "Signals Generated",
+                  "value": "={{ $('Compute Signals').item.json.signals_generated }}",
+                  "short": true
+                },
+                {
+                  "title": "High Edge Signals",
+                  "value": "={{ $json.length }}",
+                  "short": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "id": "notify-signals",
+      "name": "Notify Signals",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [2220, 200]
+    },
+    {
+      "parameters": {
+        "message": "No signals generated for current events",
+        "additionalFields": {
+          "attachments": [
+            {
+              "color": "warning",
+              "fields": [
+                {
+                  "title": "Event ID",
+                  "value": "={{ $('Split Events').item.json.id }}",
+                  "short": true
+                },
+                {
+                  "title": "Reason",
+                  "value": "No profitable opportunities found",
+                  "short": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "id": "notify-no-signals",
+      "name": "Notify No Signals",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [2220, 400]
+    },
+    {
+      "parameters": {
+        "message": "No odds available for event: {{ $('Split Events').item.json.id }}",
+        "additionalFields": {
+          "attachments": [
+            {
+              "color": "warning",
+              "fields": [
+                {
+                  "title": "Event",
+                  "value": "={{ $('Split Events').item.json.home_team }} vs {{ $('Split Events').item.json.away_team }}",
+                  "short": true
+                },
+                {
+                  "title": "Start Time",
+                  "value": "={{ $('Split Events').item.json.start_time }}",
+                  "short": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "id": "notify-no-odds",
+      "name": "Notify No Odds",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [2220, 600]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Scheduled Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Scheduled Events": {
+      "main": [
+        [
+          {
+            "node": "Check Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Events": {
+      "main": [
+        [
+          {
+            "node": "Split Events",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Events": {
+      "main": [
+        [
+          {
+            "node": "Fetch Odds for Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Odds for Event": {
+      "main": [
+        [
+          {
+            "node": "Check Odds Available",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Odds Available": {
+      "main": [
+        [
+          {
+            "node": "Compute Signals",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify No Odds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Signals": {
+      "main": [
+        [
+          {
+            "node": "Check Signals Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Signals Generated": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Signals",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify No Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Signals": {
+      "main": [
+        [
+          {
+            "node": "Notify Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T12:00:00.000Z",
+  "versionId": "1"
+}

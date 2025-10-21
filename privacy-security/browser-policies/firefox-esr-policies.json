@@ -1,0 +1,97 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "AppAutoUpdate": false,
+    "DNSOverHTTPS": {
+      "Enabled": true,
+      "ProviderURL": "https://dns.quad9.net/dns-query",
+      "Locked": true
+    },
+    "Preferences": {
+      "privacy.resistFingerprinting": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "intl.accept_languages": {
+        "Value": "en-US, en",
+        "Status": "locked"
+      },
+      "general.useragent.override": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "media.peerconnection.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "network.trr.mode": {
+        "Value": 3,
+        "Status": "locked"
+      },
+      "network.proxy.autoconfig_url": {
+        "Value": "http://proxy.local/proxy.pac",
+        "Status": "locked"
+      },
+      "network.proxy.type": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "privacy.trackingprotection.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.trackingprotection.pbmode.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.donottrackheader.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "geo.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "media.navigator.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "toolkit.telemetry.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "toolkit.telemetry.unified": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "datareporting.healthreport.uploadEnabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "datareporting.policy.dataSubmissionEnabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.crashReports.unsubmittedCheck.autoSubmit2": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.feeds.telemetry": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "network.dns.disableIPv6": {
+        "Value": false,
+        "Status": "default"
+      },
+      "network.trr.bootstrapAddr": {
+        "Value": "9.9.9.9",
+        "Status": "locked"
+      },
+      "network.trr.custom_uri": {
+        "Value": "https://dns.quad9.net/dns-query",
+        "Status": "locked"
+      }
+    }
+  }
+}

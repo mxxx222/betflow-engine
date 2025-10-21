@@ -1,0 +1,232 @@
+name: Security
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit
+      
+      - name: Run safety check
+        run: |
+          safety check -r api/requirements.txt
+          safety check -r engine/requirements.txt
+          safety check -r tests/requirements.txt
+      
+      - name: Run bandit security linter
+        run: |
+          bandit -r api/ -f json -o bandit-api.json
+          bandit -r engine/ -f json -o bandit-engine.json
+          bandit -r tests/ -f json -o bandit-tests.json
+      
+      - name: Upload bandit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-results
+          path: bandit-*.json
+
+  container-scan:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run Trivy on Docker images
+        run: |
+          # Build images for scanning
+          docker build -t betflow-api ./api
+          docker build -t betflow-engine ./engine
+          docker build -t betflow-web ./web
+          docker build -t betflow-worker ./worker
+          docker build -t betflow-db ./db
+          
+          # Scan images
+          trivy image --format table betflow-api
+          trivy image --format table betflow-engine
+          trivy image --format table betflow-web
+          trivy image --format table betflow-worker
+          trivy image --format table betflow-db
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python, javascript
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  compliance-scan:
+    name: Compliance Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for prohibited content
+        run: |
+          echo "Checking for prohibited betting-related content..."
+          if grep -r -i "bet\|stake\|wager\|gamble\|tip\|prediction" api/ engine/ web/ --exclude-dir=node_modules --exclude="*.md"; then
+            echo "ERROR: Prohibited content found in code"
+            exit 1
+          fi
+          echo "No prohibited content found"
+      
+      - name: Check compliance headers
+        run: |
+          echo "Checking for compliance headers..."
+          if ! grep -r "analytics-only" api/; then
+            echo "ERROR: Compliance headers missing from API"
+            exit 1
+          fi
+          echo "Compliance headers found"
+      
+      - name: Check legal disclaimers
+        run: |
+          echo "Checking for legal disclaimers..."
+          if ! grep -r "Educational analytics only" api/ web/; then
+            echo "ERROR: Legal disclaimers missing"
+            exit 1
+          fi
+          echo "Legal disclaimers found"
+      
+      - name: Check security headers
+        run: |
+          echo "Checking for security headers..."
+          if ! grep -r "X-Content-Type-Options\|X-Frame-Options\|Strict-Transport-Security" api/ web/; then
+            echo "ERROR: Security headers missing"
+            exit 1
+          fi
+          echo "Security headers found"
+      
+      - name: Check rate limiting
+        run: |
+          echo "Checking for rate limiting..."
+          if ! grep -r "rate.*limit\|RateLimit" api/; then
+            echo "ERROR: Rate limiting not implemented"
+            exit 1
+          fi
+          echo "Rate limiting found"
+      
+      - name: Check audit logging
+        run: |
+          echo "Checking for audit logging..."
+          if ! grep -r "audit\|AuditLog" api/; then
+            echo "ERROR: Audit logging not implemented"
+            exit 1
+          fi
+          echo "Audit logging found"
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+      
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for hardcoded secrets..."
+          if grep -r "password\|secret\|key\|token" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.md" --exclude="*.yml" --exclude="*.yaml"; then
+            echo "WARNING: Potential hardcoded secrets found"
+            echo "Please review and remove any hardcoded secrets"
+          else
+            echo "No hardcoded secrets found"
+          fi
+
+  license-scan:
+    name: License Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install pip-licenses
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-licenses
+      
+      - name: Check Python licenses
+        run: |
+          pip-licenses --format=json --output-file=python-licenses.json
+          pip-licenses --format=table
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Node.js dependencies
+        run: |
+          cd web
+          npm ci
+      
+      - name: Check Node.js licenses
+        run: |
+          cd web
+          npm list --json > ../node-licenses.json
+          npm list
+      
+      - name: Upload license reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-reports
+          path: |
+            python-licenses.json
+            node-licenses.json

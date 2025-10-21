@@ -1,0 +1,80 @@
+{
+  "DnsOverHttpsMode": "secure",
+  "DnsOverHttpsTemplates": "https://dns.quad9.net/dns-query",
+  "BrowserSignin": 0,
+  "MetricsReportingEnabled": false,
+  "WebRtcIPHandlingPolicy": "DisableNonProxiedUdp",
+  "WebRtcUdpPortRange": "0-0",
+  "WebRtcLocalIpsAllowedUrls": [],
+  "ProxySettings": {
+    "ProxyMode": "pac_script",
+    "ProxyPacUrl": "http://proxy.local/proxy.pac"
+  },
+  "ForceLanguageDirection": 0,
+  "AcceptLanguages": "en-US,en",
+  "UserAgentReduction": true,
+  "UserDataSnapshotRetentionLimit": 0,
+  "DefaultSearchProviderEnabled": true,
+  "DefaultSearchProviderSearchURL": "https://duckduckgo.com/?q={searchTerms}",
+  "DefaultSearchProviderName": "DuckDuckGo",
+  "PasswordManagerEnabled": false,
+  "AutofillAddressEnabled": false,
+  "AutofillCreditCardEnabled": false,
+  "SyncDisabled": true,
+  "SigninAllowed": false,
+  "EnableMediaRouter": false,
+  "CloudManagementEnrollmentToken": "",
+  "ReportingEnabled": false,
+  "SafeBrowsingEnabled": true,
+  "SafeBrowsingExtendedReportingEnabled": false,
+  "SearchSuggestEnabled": false,
+  "SpellcheckEnabled": true,
+  "SpellcheckLanguage": [
+    "en-US"
+  ],
+  "TranslateEnabled": false,
+  "URLBlacklist": [
+    "chrome://settings/syncSetup",
+    "chrome://settings/people"
+  ],
+  "ExtensionSettings": {
+    "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
+      "installation_mode": "force_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx",
+      "blocked_permissions": [
+        "webRequest",
+        "webRequestBlocking"
+      ]
+    }
+  },
+  "BlockThirdPartyCookies": true,
+  "DefaultCookiesSetting": 1,
+  "DefaultGeolocationSetting": 2,
+  "DefaultNotificationsSetting": 2,
+  "DefaultMediaStreamSetting": 2,
+  "AudioCaptureAllowed": false,
+  "VideoCaptureAllowed": false,
+  "HideWebStoreIcon": true,
+  "HomepageIsNewTabPage": false,
+  "HomepageLocation": "about:blank",
+  "NewTabPageLocation": "about:blank",
+  "RestoreOnStartup": 5,
+  "RestoreOnStartupURLs": [
+    "about:blank"
+  ],
+  "BookmarkBarEnabled": false,
+  "AllowDeletingBrowserHistory": false,
+  "BrowserHistoryDisabled": false,
+  "IncognitoModeAvailability": 1,
+  "BrowserNetworkTimeQueriesEnabled": false,
+  "BuiltInDnsClientEnabled": false,
+  "NetworkPredictionOptions": 2,
+  "WPADQuickCheckEnabled": false,
+  "EnableOnlineRevocationChecks": true,
+  "RequireOnlineRevocationChecksForLocalAnchors": true,
+  "SSLVersionMin": "tls1.2",
+  "DefaultJavaScriptSetting": 1,
+  "JavaScriptJitSettings": {
+    "*": 1
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "name": "Privacy Security Policy",
+  "version": "1.0",
+  "description": "Android Enterprise policy for privacy-enhanced browsing and metadata leak prevention",
+  "applications": [
+    {
+      "packageName": "org.mozilla.firefox",
+      "installType": "REQUIRED_FOR_SETUP",
+      "defaultPermissionPolicy": "DENY",
+      "permissionGrants": [
+        {
+          "permission": "android.permission.INTERNET",
+          "policy": "GRANT"
+        },
+        {
+          "permission": "android.permission.ACCESS_NETWORK_STATE",
+          "policy": "GRANT"
+        },
+        {
+          "permission": "android.permission.ACCESS_WIFI_STATE",
+          "policy": "GRANT"
+        },
+        {
+          "permission": "android.permission.WRITE_EXTERNAL_STORAGE",
+          "policy": "DENY"
+        },
+        {
+          "permission": "android.permission.ACCESS_FINE_LOCATION",
+          "policy": "DENY"
+        },
+        {
+          "permission": "android.permission.ACCESS_COARSE_LOCATION",
+          "policy": "DENY"
+        },
+        {
+          "permission": "android.permission.CAMERA",
+          "policy": "DENY"
+        },
+        {
+          "permission": "android.permission.RECORD_AUDIO",
+          "policy": "DENY"
+        }
+      ],
+      "managedConfiguration": {
+        "homepage": "about:blank",
+        "bookmarks_enabled": false,
+        "privacy_resist_fingerprinting": true,
+        "network_trr_mode": 3,
+        "network_trr_uri": "https://dns.quad9.net/dns-query",
+        "media_peerconnection_enabled": false,
+        "geo_enabled": false,
+        "intl_accept_languages": "en-US,en",
+        "datareporting_healthreport_uploadEnabled": false,
+        "toolkit_telemetry_enabled": false,
+        "proxy_type": 2,
+        "proxy_autoconfig_url": "http://proxy.local/proxy.pac"
+      }
+    },
+    {
+      "packageName": "com.android.chrome",
+      "installType": "PREINSTALLED",
+      "managedConfiguration": {
+        "HomepageLocation": "about:blank",
+        "NewTabPageLocation": "about:blank",
+        "RestoreOnStartup": 5,
+        "BookmarkBarEnabled": false,
+        "AutofillAddressEnabled": false,
+        "AutofillCreditCardEnabled": false,
+        "PasswordManagerEnabled": false,
+        "SyncDisabled": true,
+        "SigninAllowed": false,
+        "MetricsReportingEnabled": false,
+        "SafeBrowsingExtendedReportingEnabled": false,
+        "SearchSuggestEnabled": false,
+        "TranslateEnabled": false,
+        "SpellcheckEnabled": true,
+        "SpellcheckLanguage": ["en-US"],
+        "DnsOverHttpsMode": "secure",
+        "DnsOverHttpsTemplates": "https://dns.quad9.net/dns-query",
+        "WebRtcIPHandlingPolicy": "DisableNonProxiedUdp",
+        "WebRtcUdpPortRange": "0-0",
+        "ProxySettings": {
+          "ProxyMode": "pac_script",
+          "ProxyPacUrl": "http://proxy.local/proxy.pac"
+        },
+        "AcceptLanguages": "en-US,en",
+        "UserAgentReduction": true,
+        "BlockThirdPartyCookies": true,
+        "DefaultGeolocationSetting": 2,
+        "DefaultNotificationsSetting": 2,
+        "DefaultMediaStreamSetting": 2,
+        "AudioCaptureAllowed": false,
+        "VideoCaptureAllowed": false
+      }
+    }
+  ],
+  "systemApps": [
+    {
+      "packageName": "com.android.settings",
+      "managedConfiguration": {
+        "location_mode": "off",
+        "usage_access_enabled": false,
+        "data_usage_warning": true,
+        "developer_options_enabled": false
+      }
+    }
+  ],
+  "networkConfiguration": {
+    "dnsOverHttpsMode": "AUTOMATIC",
+    "dnsOverHttpsTemplates": "https://dns.quad9.net/dns-query",
+    "globalHttpProxy": {
+      "type": "PAC_PROXY",
+      "pacUrl": "http://proxy.local/proxy.pac"
+    },
+    "wifiConfigDisabled": false,
+    "bluetoothConfigDisabled": true
+  },
+  "deviceSettings": {
+    "locationServicesEnabled": false,
+    "cameraDisabled": false,
+    "microphoneDisabled": false,
+    "screenCaptureDisabled": false,
+    "unknownSourcesEnabled": false,
+    "developerOptionsEnabled": false,
+    "debuggingFeaturesEnabled": false,
+    "installFromUnknownSourcesAllowed": false,
+    "safeBootDisabled": false,
+    "statusBarDisabled": false,
+    "keyguardDisabled": false,
+    "bluetoothDisabled": true,
+    "nfcDisabled": true,
+    "usbFileTransferDisabled": false,
+    "wifiDirectDisabled": true,
+    "addUserDisabled": true,
+    "adjustVolumeDisabled": false,
+    "factoryResetDisabled": true
+  },
+  "privateSpacePolicy": {
+    "enabled": false
+  },
+  "accountManagement": {
+    "accountTypesWithManagementDisabled": [
+      "com.google",
+      "com.facebook.auth",
+      "com.twitter.android.auth",
+      "com.instagram.android"
+    ]
+  },
+  "applicationRestrictions": [
+    {
+      "packageName": "com.google.android.gms",
+      "restrictions": {
+        "usage_reporting_enabled": false,
+        "ads_personalization_enabled": false,
+        "location_history_enabled": false,
+        "web_and_app_activity_enabled": false
+      }
+    }
+  ],
+  "securitySettings": {
+    "encryptionPolicy": "ENABLED_WITH_PASSWORD",
+    "passwordRequirements": {
+      "passwordMinimumLength": 8,
+      "passwordMinimumLetters": 1,
+      "passwordMinimumNumeric": 1,
+      "passwordMinimumSymbols": 1,
+      "maximumFailedPasswordsForWipe": 10,
+      "passwordExpirationTimeout": 7776000,
+      "passwordHistoryLength": 5
+    },
+    "keyguardFeatures": {
+      "disableCamera": true,
+      "disableFingerprint": false,
+      "disableFace": true,
+      "disableIris": true,
+      "disableBiometrics": false
+    }
+  },
+  "complianceRules": [
+    {
+      "settingName": "api_level",
+      "conditionOperator": "GREATER_THAN_OR_EQUAL_TO",
+      "intValue": 26,
+      "deviceConditions": [],
+      "nonComplianceActions": [
+        {
+          "actionType": "BLOCK_ACCESS",
+          "blockAfterDays": 7
+        }
+      ]
+    },
+    {
+      "settingName": "security_patch_level",
+      "conditionOperator": "LESS_THAN",
+      "longValue": 2592000,
+      "deviceConditions": [],
+      "nonComplianceActions": [
+        {
+          "actionType": "WIPE_DATA",
+          "blockAfterDays": 30
+        }
+      ]
+    }
+  ],
+  "playStoreMode": "BLACKLIST",
+  "installedAppsBlacklist": [
+    "com.facebook.katana",
+    "com.instagram.android",
+    "com.twitter.android",
+    "com.snapchat.android",
+    "com.tiktok.android",
+    "com.discord",
+    "com.telegram.messenger",
+    "com.whatsapp",
+    "com.viber.voip",
+    "com.skype.raider"
+  ],
+  "permittedInputMethods": [
+    "com.android.inputmethod.latin",
+    "com.google.android.inputmethod.latin"
+  ],
+  "statusReportRequests": [
+    "APPLICATION_REPORTS",
+    "DEVICE_SETTINGS",
+    "MEMORY_INFO",
+    "NETWORK_INFO",
+    "POWER_MANAGEMENT",
+    "SOFTWARE_INFO"
+  ],
+  "kioskCustomization": {
+    "deviceSettings": "SETTINGS_ACCESS_LEVEL_WHITELIST_ONLY",
+    "powerButtonActions": "POWER_BUTTON_ACTIONS_AVAILABLE",
+    "statusBar": "STATUS_BAR_ENABLED_EXCEPT_NOTIFICATION",
+    "systemErrorWarnings": "ERROR_AND_WARNINGS_ENABLED",
+    "systemNavigation": "SYSTEM_NAVIGATION_ENABLED"
+  }
+}

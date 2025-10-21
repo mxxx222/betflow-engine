@@ -1,0 +1,23 @@
+[Unit]
+Description=Clean journal logs older than 2 days
+Description=Clean journal logs older than 2 days
+After=systemd-journald.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/journalctl --vacuum-time=2d
+# Optional: Remove old kernel messages too
+# ExecStart=/bin/sh -c '/bin/journalctl --vacuum-time=2d; /bin/journalctl --vacuum-time=2d --unit=kernel'
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+
+[Install]
+WantedBy=multi-user.target

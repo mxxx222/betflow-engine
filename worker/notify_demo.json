@@ -1,0 +1,273 @@
+{
+  "name": "Demo Notification Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/v1/signals/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "min_edge",
+              "value": "0.05"
+            },
+            {
+              "name": "status",
+              "value": "active"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-signals",
+      "name": "Fetch Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-signals",
+      "name": "Check Signals",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/v1/models/status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-model-status",
+      "name": "Fetch Model Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process signals and create summary\nconst signals = $input.all();\nconst modelStatus = $('Fetch Model Status').item.json;\n\n// Group signals by market\nconst signalsByMarket = {};\nconst signalsBySport = {};\n\nsignals.forEach(signal => {\n  const market = signal.json.market;\n  const sport = signal.json.event?.sport || 'unknown';\n  \n  if (!signalsByMarket[market]) {\n    signalsByMarket[market] = [];\n  }\n  signalsByMarket[market].push(signal.json);\n  \n  if (!signalsBySport[sport]) {\n    signalsBySport[sport] = [];\n  }\n  signalsBySport[sport].push(signal.json);\n});\n\n// Calculate statistics\nconst totalSignals = signals.length;\nconst avgEdge = signals.reduce((sum, s) => sum + s.json.edge, 0) / totalSignals;\nconst maxEdge = Math.max(...signals.map(s => s.json.edge));\nconst minEdge = Math.min(...signals.map(s => s.json.edge));\n\n// Find top signals by edge\nconst topSignals = signals\n  .sort((a, b) => b.json.edge - a.json.edge)\n  .slice(0, 5)\n  .map(s => s.json);\n\n// Create summary\nconst summary = {\n  timestamp: new Date().toISOString(),\n  totalSignals,\n  avgEdge: Math.round(avgEdge * 1000) / 1000,\n  maxEdge: Math.round(maxEdge * 1000) / 1000,\n  minEdge: Math.round(minEdge * 1000) / 1000,\n  signalsByMarket,\n  signalsBySport,\n  topSignals,\n  modelStatus\n};\n\nreturn [{ json: summary }];"
+      },
+      "id": "process-signals",
+      "name": "Process Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "message": "📊 BetFlow Engine Analytics Summary",
+        "additionalFields": {
+          "attachments": [
+            {
+              "color": "good",
+              "title": "Analytics Summary",
+              "fields": [
+                {
+                  "title": "Total Active Signals",
+                  "value": "={{ $json.totalSignals }}",
+                  "short": true
+                },
+                {
+                  "title": "Average Edge",
+                  "value": "={{ $json.avgEdge }}",
+                  "short": true
+                },
+                {
+                  "title": "Max Edge",
+                  "value": "={{ $json.maxEdge }}",
+                  "short": true
+                },
+                {
+                  "title": "Min Edge",
+                  "value": "={{ $json.minEdge }}",
+                  "short": true
+                }
+              ]
+            },
+            {
+              "color": "info",
+              "title": "Top Signals by Edge",
+              "fields": "={{ $json.topSignals.map(s => ({ title: `${s.event?.home_team || 'N/A'} vs ${s.event?.away_team || 'N/A'}`, value: `${s.market} - Edge: ${s.edge.toFixed(3)}`, short: true })) }}"
+            },
+            {
+              "color": "warning",
+              "title": "⚠️ Legal Notice",
+              "text": "Educational analytics only. No betting facilitation. Data insights for informational purposes only."
+            }
+          ]
+        }
+      },
+      "id": "send-summary",
+      "name": "Send Summary",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "message": "No active signals found in the system",
+        "additionalFields": {
+          "attachments": [
+            {
+              "color": "warning",
+              "title": "No Signals Available",
+              "text": "No profitable opportunities found in current data. This is normal and indicates the system is working correctly."
+            },
+            {
+              "color": "info",
+              "title": "System Status",
+              "text": "Analytics engine is running normally. No action required."
+            }
+          ]
+        }
+      },
+      "id": "notify-no-signals",
+      "name": "Notify No Signals",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1340, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Signals": {
+      "main": [
+        [
+          {
+            "node": "Check Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Signals": {
+      "main": [
+        [
+          {
+            "node": "Fetch Model Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify No Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Model Status": {
+      "main": [
+        [
+          {
+            "node": "Process Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Signals": {
+      "main": [
+        [
+          {
+            "node": "Send Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T12:00:00.000Z",
+  "versionId": "1"
+}

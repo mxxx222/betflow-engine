@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  sealed-share-web:
+    build:
+      context: ../web
+    image: sealed-share-web:latest
+    container_name: sealed-share-web
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Europe/Helsinki
+    restart: unless-stopped

@@ -1,0 +1,15 @@
+[Unit]
+Description=Clean journal logs every 6 hours
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=6h
+
+# Optional: Also run daily at 3 AM
+# OnCalendar=*-*-* 03:00:00
+
+# Optional: Randomize within time window to avoid thundering herd
+# RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

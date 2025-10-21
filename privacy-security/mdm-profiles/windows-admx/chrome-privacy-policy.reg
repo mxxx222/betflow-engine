@@ -1,0 +1,106 @@
+# Chrome Privacy Policy Registry File
+# Save as: chrome-privacy-policy.reg
+# Run with: regedit /s chrome-privacy-policy.reg
+
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]
+"DnsOverHttpsMode"="secure"
+"DnsOverHttpsTemplates"="https://dns.quad9.net/dns-query"
+"BrowserSignin"=dword:00000000
+"MetricsReportingEnabled"=dword:00000000
+"WebRtcIPHandlingPolicy"="DisableNonProxiedUdp"
+"WebRtcUdpPortRange"="0-0"
+"ForceLanguageDirection"=dword:00000000
+"AcceptLanguages"="en-US,en"
+"UserAgentReduction"=dword:00000001
+"UserDataSnapshotRetentionLimit"=dword:00000000
+"DefaultSearchProviderEnabled"=dword:00000001
+"DefaultSearchProviderSearchURL"="https://duckduckgo.com/?q={searchTerms}"
+"DefaultSearchProviderName"="DuckDuckGo"
+"PasswordManagerEnabled"=dword:00000000
+"AutofillAddressEnabled"=dword:00000000
+"AutofillCreditCardEnabled"=dword:00000000
+"SyncDisabled"=dword:00000001
+"SigninAllowed"=dword:00000000
+"EnableMediaRouter"=dword:00000000
+"ReportingEnabled"=dword:00000000
+"SafeBrowsingEnabled"=dword:00000001
+"SafeBrowsingExtendedReportingEnabled"=dword:00000000
+"SearchSuggestEnabled"=dword:00000000
+"SpellcheckEnabled"=dword:00000001
+"TranslateEnabled"=dword:00000000
+"BlockThirdPartyCookies"=dword:00000001
+"DefaultCookiesSetting"=dword:00000001
+"DefaultGeolocationSetting"=dword:00000002
+"DefaultNotificationsSetting"=dword:00000002
+"DefaultMediaStreamSetting"=dword:00000002
+"AudioCaptureAllowed"=dword:00000000
+"VideoCaptureAllowed"=dword:00000000
+"HideWebStoreIcon"=dword:00000001
+"HomepageIsNewTabPage"=dword:00000000
+"HomepageLocation"="about:blank"
+"NewTabPageLocation"="about:blank"
+"RestoreOnStartup"=dword:00000005
+"BookmarkBarEnabled"=dword:00000000
+"AllowDeletingBrowserHistory"=dword:00000000
+"BrowserHistoryDisabled"=dword:00000000
+"IncognitoModeAvailability"=dword:00000001
+"BrowserNetworkTimeQueriesEnabled"=dword:00000000
+"BuiltInDnsClientEnabled"=dword:00000000
+"NetworkPredictionOptions"=dword:00000002
+"WPADQuickCheckEnabled"=dword:00000000
+"EnableOnlineRevocationChecks"=dword:00000001
+"RequireOnlineRevocationChecksForLocalAnchors"=dword:00000001
+"SSLVersionMin"="tls1.2"
+"DefaultJavaScriptSetting"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ProxySettings]
+"ProxyMode"="pac_script"
+"ProxyPacUrl"="http://proxy.local/proxy.pac"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs]
+"1"="about:blank"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\SpellcheckLanguage]
+"1"="en-US"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLBlacklist]
+"1"="chrome://settings/syncSetup"
+"2"="chrome://settings/people"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionSettings]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionSettings\cjpalhdlnbpafiamejdnhcphjbkeiagm]
+"installation_mode"="force_installed"
+"update_url"="https://clients2.google.com/service/update2/crx"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionSettings\cjpalhdlnbpafiamejdnhcphjbkeiagm\blocked_permissions]
+"1"="webRequest"
+"2"="webRequestBlocking"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\JavaScriptJitSettings]
+"*"=dword:00000001
+
+; Firefox ESR Registry Settings (if using Firefox ESR with registry configuration)
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox]
+"DisableTelemetry"=dword:00000001
+"AppAutoUpdate"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox\DNSOverHTTPS]
+"Enabled"=dword:00000001
+"ProviderURL"="https://dns.quad9.net/dns-query"
+"Locked"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox\Preferences]
+"privacy.resistFingerprinting"="{\"Value\": true, \"Status\": \"locked\"}"
+"intl.accept_languages"="{\"Value\": \"en-US, en\", \"Status\": \"locked\"}"
+"general.useragent.override"="{\"Value\": \"\", \"Status\": \"locked\"}"
+"media.peerconnection.enabled"="{\"Value\": false, \"Status\": \"locked\"}"
+"network.trr.mode"="{\"Value\": 3, \"Status\": \"locked\"}"
+"network.proxy.autoconfig_url"="{\"Value\": \"http://proxy.local/proxy.pac\", \"Status\": \"locked\"}"
+"network.proxy.type"="{\"Value\": 2, \"Status\": \"locked\"}"
+"privacy.trackingprotection.enabled"="{\"Value\": true, \"Status\": \"locked\"}"
+"geo.enabled"="{\"Value\": false, \"Status\": \"locked\"}"
+"media.navigator.enabled"="{\"Value\": false, \"Status\": \"locked\"}"
+"toolkit.telemetry.enabled"="{\"Value\": false, \"Status\": \"locked\"}"

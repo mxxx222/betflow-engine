@@ -1,0 +1,411 @@
+#!/usr/bin/env python3
+"""
+OpSec-Harden: Cross-platform browser and OS hardening automation tool
+Part of the StealthGuard Enterprise security toolkit
+
+Automates browser hardening (Firefox/Chromium) with:
+- User-Agent normalization
+- DNS-over-HTTPS enforcement  
+- Proxy configuration
+- WebRTC leak prevention
+- Fingerprint resistance
+"""
+
+import argparse
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+__version__ = "1.0.0-enterprise"
+__author__ = "StealthGuard Technologies"
+
+class OpSecHardener:
+    """Main hardening orchestrator class"""
+    
+    def __init__(self):
+        self.system = platform.system().lower()
+        self.backup_dir = Path.home() / ".opsec-harden" / "backups"
+        self.profiles_dir = Path(__file__).parent / "profiles"
+        self.scripts_dir = Path(__file__).parent / "scripts"
+        
+        # Ensure backup directory exists
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        
+    def log(self, message: str, level: str = "INFO"):
+        """Centralized logging"""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] [{level}] {message}")
+        
+        # Also log to file
+        log_file = Path.home() / ".opsec-harden" / "harden.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(log_file, "a") as f:
+            f.write(f"[{timestamp}] [{level}] {message}\n")
+    
+    def get_browser_profile_path(self, browser: str) -> Optional[Path]:
+        """Get browser profile directory path"""
+        if browser == "firefox":
+            if self.system == "linux":
+                return Path.home() / ".mozilla/firefox"
+            elif self.system == "darwin":
+                return Path.home() / "Library/Application Support/Firefox/Profiles"
+            elif self.system == "windows":
+                return Path.home() / "AppData/Roaming/Mozilla/Firefox/Profiles"
+        
+        elif browser == "chromium":
+            if self.system == "linux":
+                return Path.home() / ".config/chromium"
+            elif self.system == "darwin":
+                return Path.home() / "Library/Application Support/Chromium"
+            elif self.system == "windows":
+                return Path.home() / "AppData/Local/Chromium/User Data"
+        
+        return None
+    
+    def backup_browser_config(self, browser: str) -> Path:
+        """Create backup of current browser configuration"""
+        profile_path = self.get_browser_profile_path(browser)
+        if not profile_path or not profile_path.exists():
+            raise FileNotFoundError(f"{browser} profile directory not found")
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = self.backup_dir / f"{browser}_{timestamp}"
+        
+        self.log(f"Creating backup: {profile_path} -> {backup_path}")
+        shutil.copytree(profile_path, backup_path, ignore_errors=True)
+        
+        return backup_path
+    
+    def apply_firefox_hardening(self, profile: str = "standard"):
+        """Apply Firefox hardening configuration"""
+        self.log(f"Applying Firefox hardening (profile: {profile})")
+        
+        # Create backup first
+        backup_path = self.backup_browser_config("firefox")
+        
+        # Load hardening profile
+        profile_file = self.profiles_dir / f"firefox_{profile}.json"
+        if not profile_file.exists():
+            raise FileNotFoundError(f"Firefox profile not found: {profile_file}")
+        
+        with open(profile_file) as f:
+            config = json.load(f)
+        
+        # Apply configuration based on OS
+        if self.system == "linux":
+            self._apply_firefox_linux(config)
+        elif self.system == "darwin":
+            self._apply_firefox_macos(config)
+        elif self.system == "windows":
+            self._apply_firefox_windows(config)
+        else:
+            raise OSError(f"Unsupported system: {self.system}")
+        
+        self.log("✅ Firefox hardening applied successfully")
+        return backup_path
+    
+    def apply_chromium_hardening(self, profile: str = "standard"):
+        """Apply Chromium hardening configuration"""
+        self.log(f"Applying Chromium hardening (profile: {profile})")
+        
+        # Create backup first
+        backup_path = self.backup_browser_config("chromium")
+        
+        # Load hardening profile
+        profile_file = self.profiles_dir / f"chromium_{profile}.json"
+        if not profile_file.exists():
+            raise FileNotFoundError(f"Chromium profile not found: {profile_file}")
+        
+        with open(profile_file) as f:
+            config = json.load(f)
+        
+        # Apply configuration based on OS
+        if self.system == "linux":
+            self._apply_chromium_linux(config)
+        elif self.system == "darwin":
+            self._apply_chromium_macos(config)
+        elif self.system == "windows":
+            self._apply_chromium_windows(config)
+        else:
+            raise OSError(f"Unsupported system: {self.system}")
+        
+        self.log("✅ Chromium hardening applied successfully")
+        return backup_path
+    
+    def _apply_firefox_linux(self, config: Dict):
+        """Apply Firefox configuration on Linux"""
+        script_path = self.scripts_dir / "firefox_linux.sh"
+        if not script_path.exists():
+            raise FileNotFoundError(f"Linux Firefox script not found: {script_path}")
+        
+        # Make script executable
+        os.chmod(script_path, 0o755)
+        
+        # Run hardening script
+        env = os.environ.copy()
+        env["OPSEC_CONFIG"] = json.dumps(config)
+        
+        result = subprocess.run([str(script_path)], env=env, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Firefox hardening failed: {result.stderr}")
+        
+        self.log("Firefox Linux hardening completed")
+    
+    def _apply_firefox_macos(self, config: Dict):
+        """Apply Firefox configuration on macOS"""
+        script_path = self.scripts_dir / "firefox_macos.sh"
+        if not script_path.exists():
+            raise FileNotFoundError(f"macOS Firefox script not found: {script_path}")
+        
+        # Make script executable
+        os.chmod(script_path, 0o755)
+        
+        # Run hardening script
+        env = os.environ.copy()
+        env["OPSEC_CONFIG"] = json.dumps(config)
+        
+        result = subprocess.run([str(script_path)], env=env, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Firefox hardening failed: {result.stderr}")
+        
+        self.log("Firefox macOS hardening completed")
+    
+    def _apply_firefox_windows(self, config: Dict):
+        """Apply Firefox configuration on Windows"""
+        script_path = self.scripts_dir / "firefox_windows.ps1"
+        if not script_path.exists():
+            raise FileNotFoundError(f"Windows Firefox script not found: {script_path}")
+        
+        # Run PowerShell script
+        config_json = json.dumps(config).replace('"', '""')  # Escape quotes for PowerShell
+        cmd = [
+            "powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path),
+            "-ConfigJson", f'"{config_json}"'
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Firefox hardening failed: {result.stderr}")
+        
+        self.log("Firefox Windows hardening completed")
+    
+    def _apply_chromium_linux(self, config: Dict):
+        """Apply Chromium configuration on Linux"""
+        script_path = self.scripts_dir / "chromium_linux.sh"
+        if not script_path.exists():
+            raise FileNotFoundError(f"Linux Chromium script not found: {script_path}")
+        
+        # Make script executable
+        os.chmod(script_path, 0o755)
+        
+        # Run hardening script
+        env = os.environ.copy()
+        env["OPSEC_CONFIG"] = json.dumps(config)
+        
+        result = subprocess.run([str(script_path)], env=env, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Chromium hardening failed: {result.stderr}")
+        
+        self.log("Chromium Linux hardening completed")
+    
+    def _apply_chromium_macos(self, config: Dict):
+        """Apply Chromium configuration on macOS"""
+        script_path = self.scripts_dir / "chromium_macos.sh"
+        if not script_path.exists():
+            raise FileNotFoundError(f"macOS Chromium script not found: {script_path}")
+        
+        # Make script executable
+        os.chmod(script_path, 0o755)
+        
+        # Run hardening script
+        env = os.environ.copy()
+        env["OPSEC_CONFIG"] = json.dumps(config)
+        
+        result = subprocess.run([str(script_path)], env=env, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Chromium hardening failed: {result.stderr}")
+        
+        self.log("Chromium macOS hardening completed")
+    
+    def _apply_chromium_windows(self, config: Dict):
+        """Apply Chromium configuration on Windows"""
+        script_path = self.scripts_dir / "chromium_windows.ps1"
+        if not script_path.exists():
+            raise FileNotFoundError(f"Windows Chromium script not found: {script_path}")
+        
+        # Run PowerShell script
+        config_json = json.dumps(config).replace('"', '""')  # Escape quotes for PowerShell
+        cmd = [
+            "powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path),
+            "-ConfigJson", f'"{config_json}"'
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Chromium hardening failed: {result.stderr}")
+        
+        self.log("Chromium Windows hardening completed")
+    
+    def rollback(self, browser: str, backup_path: str):
+        """Rollback browser configuration from backup"""
+        self.log(f"Rolling back {browser} configuration from {backup_path}")
+        
+        backup_dir = Path(backup_path)
+        if not backup_dir.exists():
+            raise FileNotFoundError(f"Backup not found: {backup_path}")
+        
+        profile_path = self.get_browser_profile_path(browser)
+        if not profile_path:
+            raise ValueError(f"Unknown browser: {browser}")
+        
+        # Remove current config and restore backup
+        if profile_path.exists():
+            shutil.rmtree(profile_path)
+        
+        shutil.copytree(backup_dir, profile_path)
+        self.log(f"✅ {browser} configuration rolled back successfully")
+    
+    def list_backups(self) -> List[Dict]:
+        """List available backups"""
+        backups = []
+        if self.backup_dir.exists():
+            for backup_path in self.backup_dir.iterdir():
+                if backup_path.is_dir():
+                    parts = backup_path.name.split("_")
+                    if len(parts) >= 2:
+                        browser = parts[0]
+                        timestamp = "_".join(parts[1:])
+                        backups.append({
+                            "browser": browser,
+                            "timestamp": timestamp,
+                            "path": str(backup_path),
+                            "size": sum(f.stat().st_size for f in backup_path.rglob("*") if f.is_file())
+                        })
+        return sorted(backups, key=lambda x: x["timestamp"], reverse=True)
+    
+    def test_hardening(self, browser: str) -> Dict:
+        """Test browser hardening effectiveness"""
+        self.log(f"Testing {browser} hardening effectiveness")
+        
+        # Run local fingerprint test
+        test_script = self.scripts_dir / "test_fingerprint.py"
+        if not test_script.exists():
+            self.log("Fingerprint test script not found", "WARN")
+            return {"status": "skipped", "reason": "test script not found"}
+        
+        try:
+            result = subprocess.run([sys.executable, str(test_script), browser], 
+                                  capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                return json.loads(result.stdout)
+            else:
+                return {"status": "error", "message": result.stderr}
+        except subprocess.TimeoutExpired:
+            return {"status": "timeout", "message": "Test timed out after 60 seconds"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+def main():
+    """Main CLI entry point"""
+    parser = argparse.ArgumentParser(
+        description="OpSec-Harden: Cross-platform browser and OS hardening tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s apply --browser firefox --profile standard
+  %(prog)s apply --browser chromium --profile paranoid
+  %(prog)s rollback --browser firefox --backup ~/.opsec-harden/backups/firefox_20250124_143022
+  %(prog)s test --browser firefox
+  %(prog)s list-backups
+        """
+    )
+    
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    # Apply command
+    apply_parser = subparsers.add_parser("apply", help="Apply browser hardening")
+    apply_parser.add_argument("--browser", "-b", required=True, 
+                             choices=["firefox", "chromium"], 
+                             help="Browser to harden")
+    apply_parser.add_argument("--profile", "-p", default="standard",
+                             choices=["minimal", "standard", "paranoid", "enterprise"],
+                             help="Hardening profile to apply")
+    
+    # Rollback command  
+    rollback_parser = subparsers.add_parser("rollback", help="Rollback browser configuration")
+    rollback_parser.add_argument("--browser", "-b", required=True,
+                                choices=["firefox", "chromium"],
+                                help="Browser to rollback")
+    rollback_parser.add_argument("--backup", required=True,
+                                help="Path to backup directory")
+    
+    # Test command
+    test_parser = subparsers.add_parser("test", help="Test hardening effectiveness")
+    test_parser.add_argument("--browser", "-b", required=True,
+                            choices=["firefox", "chromium"],
+                            help="Browser to test")
+    
+    # List backups command
+    subparsers.add_parser("list-backups", help="List available backups")
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return 1
+    
+    try:
+        hardener = OpSecHardener()
+        
+        if args.command == "apply":
+            if args.browser == "firefox":
+                backup_path = hardener.apply_firefox_hardening(args.profile)
+            elif args.browser == "chromium":
+                backup_path = hardener.apply_chromium_hardening(args.profile)
+            
+            print(f"✅ Hardening applied successfully!")
+            print(f"📁 Backup created: {backup_path}")
+            print(f"🔄 To rollback: {sys.argv[0]} rollback --browser {args.browser} --backup {backup_path}")
+        
+        elif args.command == "rollback":
+            hardener.rollback(args.browser, args.backup)
+            print(f"✅ {args.browser} configuration rolled back successfully!")
+        
+        elif args.command == "test":
+            results = hardener.test_hardening(args.browser)
+            print(f"🧪 Test results for {args.browser}:")
+            print(json.dumps(results, indent=2))
+        
+        elif args.command == "list-backups":
+            backups = hardener.list_backups()
+            if backups:
+                print("📁 Available backups:")
+                for backup in backups:
+                    size_mb = backup["size"] / (1024 * 1024)
+                    print(f"  {backup['browser']:8} | {backup['timestamp']} | {size_mb:.1f} MB | {backup['path']}")
+            else:
+                print("No backups found")
+        
+        return 0
+    
+    except KeyboardInterrupt:
+        print("\n❌ Operation cancelled by user")
+        return 1
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,234 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 isort
+      
+      - name: Lint Python code
+        run: |
+          black --check api/ engine/ tests/
+          flake8 api/ engine/ tests/
+          isort --check-only api/ engine/ tests/
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install Node.js dependencies
+        run: |
+          cd web
+          npm ci
+      
+      - name: Lint Node.js code
+        run: |
+          cd web
+          npm run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_betflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+          pip install -r engine/requirements.txt
+          pip install -r tests/requirements.txt
+      
+      - name: Run Python tests
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/test_betflow
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd tests
+          pytest -v --cov=api --cov=engine --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./tests/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          push: false
+          tags: betflow-engine/api:latest
+      
+      - name: Build Engine image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./engine
+          push: false
+          tags: betflow-engine/engine:latest
+      
+      - name: Build Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          push: false
+          tags: betflow-engine/web:latest
+      
+      - name: Build Worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./worker
+          push: false
+          tags: betflow-engine/worker:latest
+      
+      - name: Build Database image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./db
+          push: false
+          tags: betflow-engine/db:latest
+      
+      - name: Build Tests image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./tests
+          push: false
+          tags: betflow-engine/tests:latest
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Start services
+        run: |
+          docker-compose up -d postgres redis
+          sleep 10
+      
+      - name: Run database migrations
+        run: |
+          docker-compose exec -T postgres psql -U betflow -d betflow -c "CREATE DATABASE test_betflow;"
+          docker-compose exec -T api alembic upgrade head
+      
+      - name: Run integration tests
+        run: |
+          docker-compose run --rm tests pytest tests/test_integration.py -v
+      
+      - name: Stop services
+        run: |
+          docker-compose down
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  compliance:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for prohibited content
+        run: |
+          # Check for betting-related terms
+          if grep -r -i "bet\|stake\|wager\|gamble\|tip\|prediction" api/ engine/ web/ --exclude-dir=node_modules; then
+            echo "ERROR: Prohibited content found"
+            exit 1
+          fi
+      
+      - name: Check compliance headers
+        run: |
+          # Check for compliance headers in API responses
+          if ! grep -r "analytics-only" api/; then
+            echo "ERROR: Compliance headers missing"
+            exit 1
+          fi
+      
+      - name: Check legal disclaimers
+        run: |
+          # Check for legal disclaimers
+          if ! grep -r "Educational analytics only" api/ web/; then
+            echo "ERROR: Legal disclaimers missing"
+            exit 1
+          fi

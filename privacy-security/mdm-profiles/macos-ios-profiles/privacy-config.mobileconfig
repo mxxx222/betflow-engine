@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <!-- DNS over HTTPS Configuration -->
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Privacy DNS Settings</string>
+            <key>PayloadIdentifier</key>
+            <string>com.privacy.dns.settings</string>
+            <key>PayloadType</key>
+            <string>com.apple.dnsSettings.managed</string>
+            <key>PayloadUUID</key>
+            <string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>DNSSettings</key>
+            <dict>
+                <key>DNSProtocol</key>
+                <string>HTTPS</string>
+                <key>ServerAddresses</key>
+                <array>
+                    <string>9.9.9.9</string>
+                    <string>149.112.112.112</string>
+                </array>
+                <key>ServerURL</key>
+                <string>https://dns.quad9.net/dns-query</string>
+                <key>SupplementalMatchDomains</key>
+                <array>
+                    <string></string>
+                </array>
+            </dict>
+        </dict>
+        
+        <!-- Safari Privacy Settings -->
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Safari Privacy Configuration</string>
+            <key>PayloadIdentifier</key>
+            <string>com.privacy.safari.settings</string>
+            <key>PayloadType</key>
+            <string>com.apple.Safari</string>
+            <key>PayloadUUID</key>
+            <string>B2C3D4E5-F6G7-8901-BCDE-F23456789012</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <!-- Language Settings -->
+            <key>AcceptLanguages</key>
+            <array>
+                <string>en-US</string>
+                <string>en</string>
+            </array>
+            
+            <!-- Privacy Settings -->
+            <key>BlockStoragePolicy</key>
+            <integer>2</integer>
+            <key>WebKitStorageBlockingPolicy</key>
+            <integer>1</integer>
+            <key>WebKitJavaScriptEnabled</key>
+            <true/>
+            <key>WebKitJavaScriptCanOpenWindowsAutomatically</key>
+            <false/>
+            
+            <!-- Tracking Prevention -->
+            <key>WebKitPreferences.privateBrowsingEnabled</key>
+            <false/>
+            <key>WebKitPreferences.javaScriptCanAccessClipboard</key>
+            <false/>
+            <key>WebKitPreferences.domPasteAllowed</key>
+            <false/>
+            
+            <!-- Geolocation -->
+            <key>SafariGeolocationPermissionPolicy</key>
+            <integer>0</integer>
+            
+            <!-- Search Engine -->
+            <key>SearchProviderIdentifier</key>
+            <string>com.duckduckgo</string>
+            
+            <!-- AutoFill -->
+            <key>AutoFillFromAddressBook</key>
+            <false/>
+            <key>AutoFillCreditCardData</key>
+            <false/>
+            <key>AutoFillMiscellaneousForms</key>
+            <false/>
+            <key>AutoFillPasswords</key>
+            <false/>
+            
+            <!-- Downloads -->
+            <key>AlwaysPromptForDownloadFolder</key>
+            <true/>
+            
+            <!-- Cookies -->
+            <key>BlockStoragePolicy</key>
+            <integer>1</integer>
+        </dict>
+        
+        <!-- Global HTTP Proxy Configuration -->
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Privacy Proxy Settings</string>
+            <key>PayloadIdentifier</key>
+            <string>com.privacy.proxy.settings</string>
+            <key>PayloadType</key>
+            <string>com.apple.proxy.http.global</string>
+            <key>PayloadUUID</key>
+            <string>C3D4E5F6-G7H8-9012-CDEF-345678901234</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <key>ProxyType</key>
+            <string>Auto</string>
+            <key>ProxyAutoConfigURL</key>
+            <string>http://proxy.local/proxy.pac</string>
+            <key>ProxyAutoDiscoveryEnable</key>
+            <false/>
+        </dict>
+        
+        <!-- WebClip for Privacy Testing -->
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Privacy Check Tools</string>
+            <key>PayloadIdentifier</key>
+            <string>com.privacy.webclip</string>
+            <key>PayloadType</key>
+            <string>com.apple.webClip.managed</string>
+            <key>PayloadUUID</key>
+            <string>D4E5F6G7-H8I9-0123-DEFG-456789012345</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <key>URL</key>
+            <string>https://browserleaks.com/webrtc</string>
+            <key>Label</key>
+            <string>WebRTC Test</string>
+            <key>Icon</key>
+            <data>
+            <!-- Base64 encoded icon data would go here -->
+            </data>
+            <key>IsRemovable</key>
+            <false/>
+        </dict>
+        
+        <!-- Restrictions -->
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Privacy Restrictions</string>
+            <key>PayloadIdentifier</key>
+            <string>com.privacy.restrictions</string>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadUUID</key>
+            <string>E5F6G7H8-I9J0-1234-EFGH-567890123456</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <!-- Disable Siri -->
+            <key>allowAssistant</key>
+            <false/>
+            <key>allowAssistantUserGeneratedContent</key>
+            <false/>
+            
+            <!-- Disable Analytics -->
+            <key>allowDiagnosticSubmission</key>
+            <false/>
+            
+            <!-- Limit Ad Tracking -->
+            <key>forceLimitAdTracking</key>
+            <true/>
+            
+            <!-- Disable Location Services for unnecessary apps -->
+            <key>allowLocationServices</key>
+            <true/>
+        </dict>
+    </array>
+    
+    <!-- Main Profile Properties -->
+    <key>PayloadDisplayName</key>
+    <string>Privacy & Security Configuration</string>
+    <key>PayloadDescription</key>
+    <string>Configures privacy settings, DoH, proxy, and security restrictions to minimize metadata leaks.</string>
+    <key>PayloadIdentifier</key>
+    <string>com.organization.privacy.profile</string>
+    <key>PayloadOrganization</key>
+    <string>Privacy Security Team</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/>
+    <key>PayloadScope</key>
+    <string>System</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>F6G7H8I9-J0K1-2345-FGHI-678901234567</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+    
+    <!-- Installation Requirements -->
+    <key>ConsentText</key>
+    <dict>
+        <key>en</key>
+        <string>This profile configures privacy and security settings including DNS over HTTPS, proxy configuration, and browser privacy settings. These settings help protect your privacy by minimizing metadata leaks and enabling secure browsing.
+
+Key Changes:
+- DNS queries will use encrypted DNS over HTTPS (Quad9)
+- Web traffic will route through configured proxy
+- Browser language set to English (US)
+- Location services restricted for privacy
+- Tracking and analytics disabled
+
+Do you agree to install this privacy configuration profile?</string>
+    </dict>
+</dict>
+</plist>
