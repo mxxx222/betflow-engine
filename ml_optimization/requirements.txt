@@ -1,0 +1,77 @@
+# ML Optimization Requirements
+# Automated ML optimization with calibration and validation for high ROI targeting
+
+# Core ML libraries
+scikit-learn>=1.3.0
+pandas>=1.5.0
+numpy>=1.21.0
+scipy>=1.9.0
+
+# Advanced ML models
+lightgbm>=3.3.0
+xgboost>=1.7.0
+catboost>=1.2.0
+
+# Hyperparameter optimization
+optuna>=3.0.0
+optuna[visualization]>=3.0.0
+
+# Model calibration
+scikit-learn[calibration]>=1.3.0
+
+# Feature selection
+scikit-learn[feature_selection]>=1.3.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Data processing
+scikit-learn[preprocessing]>=1.3.0
+
+# Async operations
+asyncio
+aiohttp>=3.8.0
+
+# Model persistence
+joblib>=1.2.0
+
+# Configuration
+python-dotenv>=0.19.0
+pydantic>=1.10.0
+
+# Logging
+structlog>=22.1.0
+
+# Time series
+pandas[datetime]
+
+# Statistical analysis
+statsmodels>=0.13.0
+
+# Performance monitoring
+psutil>=5.9.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.19.0
+pytest-cov>=4.0.0
+
+# Development
+jupyter>=1.0.0
+ipython>=8.0.0
+notebook>=6.5.0
+
+# Documentation
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.0.0
+
+# Code quality
+black>=22.0.0
+flake8>=5.0.0
+mypy>=0.991
+
+# Performance profiling
+memory-profiler>=0.60.0
+line-profiler>=4.0.0
