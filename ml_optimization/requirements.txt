@@ -75,3 +75,4 @@ mypy>=0.991
 # Performance profiling
 memory-profiler>=0.60.0
 line-profiler>=4.0.0
+

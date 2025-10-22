@@ -7,18 +7,21 @@ Automated ML optimization system for high ROI targeting with automatic calibrati
 ## 🎯 Key Features
 
 ### **Automated ML Optimization**
+
 - **Hyperparameter tuning** with Optuna (TPE sampler)
 - **Model ensemble** optimization (LGBM, XGBoost, CatBoost, Neural Networks, SVM)
 - **Feature selection** with multiple methods (F-score, mutual information)
 - **ROI targeting** optimization with custom loss functions
 
 ### **Automatic Calibration**
+
 - **Multiple calibration methods** (Platt scaling, Isotonic regression)
 - **Drift detection** with performance monitoring
 - **Continuous recalibration** based on performance thresholds
 - **Reliability scoring** for model confidence
 
 ### **Result Validation**
+
 - **Comprehensive metrics** (Accuracy, Precision, Recall, F1, AUC, Brier score)
 - **Performance trending** with historical analysis
 - **Alert system** for performance degradation
@@ -44,16 +47,19 @@ Automated ML optimization system for high ROI targeting with automatic calibrati
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Run Full Optimization
+
 ```bash
 python main.py --mode full --data ../selection_engine/dataset.csv
 ```
 
 ### 3. Run Individual Components
+
 ```bash
 # ML optimization only
 python main.py --mode optimize --data ../selection_engine/dataset.csv
@@ -68,6 +74,7 @@ python main.py --mode validate --model optimized_model.pkl --data ../selection_e
 ## 📊 ML Optimization Engine
 
 ### **Hyperparameter Optimization**
+
 ```python
 # Optuna-based optimization
 study = optuna.create_study(
@@ -85,6 +92,7 @@ study = optuna.create_study(
 ```
 
 ### **Ensemble Optimization**
+
 ```python
 # Weight optimization for ensemble
 def ensemble_objective(weights):
@@ -97,6 +105,7 @@ constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
 ```
 
 ### **Feature Selection**
+
 ```python
 # Multiple feature selection methods
 - F-score selection (SelectKBest with f_classif)
@@ -108,11 +117,13 @@ constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
 ## 📈 Automatic Calibration
 
 ### **Calibration Methods**
+
 - **Platt Scaling**: Sigmoid calibration with cross-validation
 - **Isotonic Regression**: Non-parametric calibration
 - **Drift Detection**: PSI/KS tests for model stability
 
 ### **Reliability Scoring**
+
 ```python
 def calculate_reliability_score(model, X, y):
     predictions = model.predict_proba(X)[:, 1]
@@ -122,6 +133,7 @@ def calculate_reliability_score(model, X, y):
 ```
 
 ### **Continuous Monitoring**
+
 - **Performance thresholds**: Target reliability >95%
 - **Drift detection**: Performance drop >5%
 - **Auto-recalibration**: When thresholds exceeded
@@ -130,6 +142,7 @@ def calculate_reliability_score(model, X, y):
 ## 🔍 Result Validation
 
 ### **Comprehensive Metrics**
+
 ```python
 metrics = {
     'accuracy': accuracy_score(y_true, y_pred),
@@ -147,21 +160,23 @@ metrics = {
 ```
 
 ### **Performance Trending**
+
 - **Historical analysis**: 30-day rolling window
 - **Performance alerts**: Threshold-based notifications
 - **Auto-retrain triggers**: 15% performance drop threshold
 - **Confidence scoring**: Overall model confidence assessment
 
 ### **ROI Simulation**
+
 ```python
 def simulate_roi(predictions, y_true, threshold=0.7, odds=2.0):
     high_conf_mask = predictions >= threshold
     if high_conf_mask.sum() == 0:
         return 0.0
-    
+
     hit_rate = (predictions[high_conf_mask] > 0.5) == y_true[high_conf_mask]
     hit_rate = hit_rate.mean()
-    
+
     # Simulate ROI
     roi = (hit_rate * (odds - 1) - (1 - hit_rate)) * 100
     return roi
@@ -170,6 +185,7 @@ def simulate_roi(predictions, y_true, threshold=0.7, odds=2.0):
 ## 🎯 Target Performance
 
 ### **Optimization Targets**
+
 - **ROI**: 15%+ target ROI
 - **Hit Rate**: 70%+ for qualified selections
 - **Reliability**: 95%+ calibration reliability
@@ -177,6 +193,7 @@ def simulate_roi(predictions, y_true, threshold=0.7, odds=2.0):
 - **Brier Score**: <0.25 for probability calibration
 
 ### **Performance Thresholds**
+
 ```python
 performance_thresholds = {
     'min_accuracy': 0.70,
@@ -189,6 +206,7 @@ performance_thresholds = {
 ```
 
 ### **Alert Thresholds**
+
 ```python
 alert_thresholds = {
     'accuracy_drop': 0.05,
@@ -203,6 +221,7 @@ alert_thresholds = {
 ## 📊 Usage Examples
 
 ### **Full Pipeline**
+
 ```python
 # Run complete optimization pipeline
 runner = MLOptimizationRunner()
@@ -216,6 +235,7 @@ result = await runner.run_full_optimization(df, 'over_2_5')
 ```
 
 ### **Individual Components**
+
 ```python
 # ML optimization only
 optimization_result = await runner.run_optimization_only(df, 'over_2_5')
@@ -228,6 +248,7 @@ validation_result = await runner.run_validation_only('model.pkl', df, 'over_2_5'
 ```
 
 ### **Custom Configuration**
+
 ```python
 # Custom optimization config
 config = OptimizationConfig(
@@ -244,12 +265,14 @@ result = await engine.optimize_for_roi(df, 'over_2_5')
 ## 📈 Expected Results
 
 ### **Optimization Performance**
+
 - **ROI Achievement**: 15-25% (depending on data quality)
 - **Hit Rate**: 70-80% (for high-confidence selections)
 - **Model Performance**: 75-85% AUC
 - **Calibration**: 95%+ reliability score
 
 ### **Validation Metrics**
+
 - **Accuracy**: 70-80%
 - **Precision**: 65-75%
 - **Recall**: 60-70%
@@ -257,6 +280,7 @@ result = await engine.optimize_for_roi(df, 'over_2_5')
 - **Brier Score**: 0.15-0.25
 
 ### **ROI by Confidence Threshold**
+
 - **70% threshold**: 5-15% ROI
 - **80% threshold**: 10-20% ROI
 - **90% threshold**: 15-25% ROI
@@ -264,6 +288,7 @@ result = await engine.optimize_for_roi(df, 'over_2_5')
 ## 🔧 Configuration
 
 ### **Optimization Config**
+
 ```python
 OptimizationConfig(
     target_roi=0.15,  # 15% target ROI
@@ -277,6 +302,7 @@ OptimizationConfig(
 ```
 
 ### **Calibration Config**
+
 ```python
 CalibrationConfig(
     recalibration_frequency=7,  # Days between recalibration
@@ -288,6 +314,7 @@ CalibrationConfig(
 ```
 
 ### **Validation Config**
+
 ```python
 ValidationConfig(
     validation_window=30,  # Days to look back for validation
@@ -299,6 +326,7 @@ ValidationConfig(
 ## 📊 Reports Generated
 
 ### **Comprehensive Report**
+
 - **Executive Summary**: Key performance indicators
 - **Optimization Results**: Best model and parameters
 - **Calibration Results**: Reliability and drift detection
@@ -307,6 +335,7 @@ ValidationConfig(
 - **Recommendations**: Next steps and actions
 
 ### **Performance Plots**
+
 - **Performance Trends**: Accuracy, AUC, F1 over time
 - **Calibration Curve**: Probability calibration visualization
 - **ROI by Threshold**: ROI simulation for different confidence levels
@@ -316,16 +345,19 @@ ValidationConfig(
 ## 🚨 Monitoring & Alerts
 
 ### **Performance Alerts**
+
 - **Critical**: Accuracy <60%, AUC <60%, Brier >0.4
 - **Warning**: Performance drops >5%
 - **Info**: Model drift detected, recalibration needed
 
 ### **Auto-Retrain Triggers**
+
 - **Performance drop**: 15% average performance decrease
 - **Drift detection**: Significant model drift
 - **Threshold breaches**: Multiple metric thresholds exceeded
 
 ### **Continuous Monitoring**
+
 - **Daily validation**: Automatic performance checks
 - **Weekly recalibration**: Model recalibration if needed
 - **Monthly optimization**: Full model reoptimization
@@ -333,6 +365,7 @@ ValidationConfig(
 ## 🔄 Feedback Loop
 
 ### **Automatic Optimization**
+
 1. **Performance monitoring** → Detect degradation
 2. **Alert generation** → Notify of issues
 3. **Auto-retrain trigger** → Initiate retraining
@@ -340,6 +373,7 @@ ValidationConfig(
 5. **Validation** → Confirm improvement
 
 ### **Continuous Improvement**
+
 - **Data drift detection**: Monitor input data changes
 - **Model drift detection**: Monitor prediction quality
 - **Performance trending**: Track long-term performance
@@ -348,12 +382,14 @@ ValidationConfig(
 ## 📚 Documentation
 
 ### **Key Files**
+
 - `auto_ml_engine.py`: ML optimization with Optuna
 - `auto_calibration.py`: Automatic model calibration
 - `result_validation.py`: Performance validation and monitoring
 - `main.py`: Orchestration runner
 
 ### **Generated Files**
+
 - `optimized_model.pkl`: Best optimized model
 - `calibration_data.pkl`: Calibration results
 - `validation_data.pkl`: Validation results
@@ -363,12 +399,14 @@ ValidationConfig(
 ## ⚠️ Important Notes
 
 ### **Performance Expectations**
+
 - **Past performance** does not guarantee future results
 - **Market conditions** can affect model performance
 - **Data quality** is critical for optimization success
 - **Regular monitoring** is essential for maintaining performance
 
 ### **Risk Management**
+
 - **Model validation** before deployment
 - **Performance monitoring** in production
 - **Automatic fallbacks** for model failures
@@ -377,3 +415,4 @@ ValidationConfig(
 ---
 
 **🎯 Target**: 15%+ ROI through automated ML optimization with 70%+ hit rate and continuous calibration for football Over/Under 2.5 markets.
+
