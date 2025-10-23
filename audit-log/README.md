@@ -4,7 +4,7 @@ This directory contains the implementation and documentation for a tamper-eviden
 
 ## Components
 
-- **Ingestor**: Fluent Bit/Vector configuration for log ingestion
+- **Ingestor**: Fluent Bit/Vector configuration for log ingestion   
 - **Immutable Storage**: S3 Object Lock (WORM) with Terraform
 - **Verification Tools**: Scripts for verifying SHA chain and log integrity
 - **Runbook**: Operational procedures for audit log management

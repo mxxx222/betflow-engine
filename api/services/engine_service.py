@@ -15,9 +15,13 @@ logger = logging.getLogger(__name__)
 
 class EngineService:
     """Service for engine calculations and model management."""
-    
+
     def __init__(self):
-        self.engine = None  # Will be initialized with Mojo engine
+        try:
+            from engine import BetFlowEngine
+            self.engine = BetFlowEngine()
+        except ImportError:
+            self.engine = None
     
     async def get_model_status(self, db: AsyncSession) -> ModelStatusResponse:
         """Get model status and information."""
@@ -64,50 +68,82 @@ class EngineService:
     
     async def calculate_ev(self, probability: float, odds: float) -> float:
         """Calculate expected value."""
-        if not 0.0 < probability < 1.0:
-            raise ValueError("Probability must be between 0 and 1")
-        if odds <= 1.0:
-            raise ValueError("Odds must be greater than 1.0")
-        
-        return (probability * odds) - 1.0
+        if self.engine:
+            return self.engine.calc_ev(probability, odds)
+        else:
+            # Fallback
+            if not 0.0 < probability < 1.0:
+                raise ValueError("Probability must be between 0 and 1")
+            if odds <= 1.0:
+                raise ValueError("Odds must be greater than 1.0")
+            return (probability * odds) - 1.0
     
-    async def calculate_poisson_probabilities(self, home_rate: float, away_rate: float, 
-                                           max_goals: int = 6) -> List[List[float]]:
+    async def calculate_poisson_probabilities(self, home_rate: float, away_rate: float,
+                                            max_goals: int = 6) -> List[List[float]]:
         """Calculate Poisson match outcome probabilities."""
-        import math
-        
-        probabilities = []
-        for home_goals in range(max_goals + 1):
-            row = []
-            for away_goals in range(max_goals + 1):
-                home_prob = self._poisson_probability(home_rate, home_goals)
-                away_prob = self._poisson_probability(away_rate, away_goals)
-                row.append(home_prob * away_prob)
-            probabilities.append(row)
-        
-        return probabilities
+        if self.engine:
+            return self.engine.calc_poisson(home_rate, away_rate, max_goals)
+        else:
+            # Fallback to Python implementation
+            import math
+            probabilities = []
+            for home_goals in range(max_goals + 1):
+                row = []
+                for away_goals in range(max_goals + 1):
+                    home_prob = self._poisson_probability(home_rate, home_goals)
+                    away_prob = self._poisson_probability(away_rate, away_goals)
+                    row.append(home_prob * away_prob)
+                probabilities.append(row)
+            return probabilities
     
     async def update_elo_ratings(self, match_data: Dict[str, Any]) -> Dict[str, float]:
         """Update ELO ratings based on match result."""
-        # This would integrate with the Mojo ELO module
-        # For now, return mock data
-        return {
-            "home_rating": 1500.0,
-            "away_rating": 1500.0,
-            "home_change": 0.0,
-            "away_change": 0.0
-        }
+        if self.engine:
+            from datetime import datetime
+            from engine import MatchResult
+
+            match = MatchResult(
+                home_team=match_data["home_team"],
+                away_team=match_data["away_team"],
+                home_score=match_data["home_score"],
+                away_score=match_data["away_score"],
+                league=match_data.get("league", "unknown"),
+                date=datetime.utcnow()
+            )
+
+            update = self.engine.update_elo(match)
+            return {
+                "home_rating": update.home_rating,
+                "away_rating": update.away_rating,
+                "home_change": update.home_change,
+                "away_change": update.away_change
+            }
+        else:
+            # Fallback mock data
+            return {
+                "home_rating": 1500.0,
+                "away_rating": 1500.0,
+                "home_change": 0.0,
+                "away_change": 0.0
+            }
     
-    async def predict_match_outcome(self, home_team: str, away_team: str, 
-                                  league: str) -> Dict[str, float]:
+    async def predict_match_outcome(self, home_team: str, away_team: str,
+                                   league: str) -> Dict[str, float]:
         """Predict match outcome probabilities."""
-        # This would integrate with the Mojo prediction modules
-        # For now, return mock data
-        return {
-            "home_win": 0.45,
-            "draw": 0.25,
-            "away_win": 0.30
-        }
+        if self.engine:
+            home_win, draw, away_win = self.engine.predict_match(home_team, away_team, league)
+            return {
+                "home_win": home_win,
+                "draw": draw,
+                "away_win": away_win
+            }
+        else:
+            # Fallback mock data
+            return {
+                "home_win": 0.45,
+                "draw": 0.25,
+                "away_win": 0.30
+            }
     
     def _poisson_probability(self, rate: float, k: int) -> float:
         """Calculate Poisson probability."""
