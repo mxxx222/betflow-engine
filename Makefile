@@ -28,7 +28,18 @@ bench: ## Run performance benchmarks
 	docker-compose run --rm engine python benchmarks.py
 	@echo "✅ Benchmarks complete"
 
-# Production Pilot
+# Canary Deployment
+canary-deploy: ## Start automated canary deployment (10% → 50% → 100%)
+	@echo "🚀 Starting automated canary deployment..."
+	python scripts/canary_deployment.py --api-url http://localhost:8000 --stage-duration 1800
+	@echo "✅ Canary deployment completed"
+
+canary-dry-run: ## Perform canary deployment dry run
+	@echo "🧪 Performing canary deployment dry run..."
+	python scripts/canary_deployment.py --dry-run --api-url http://localhost:8000
+	@echo "✅ Dry run completed"
+
+# Manual Pilot Control (Legacy)
 pilot-up: ## Start production pilot (10% traffic)
 	@echo "🚀 Starting production pilot (10% traffic)..."
 	export PILOT_TRAFFIC=10 && docker-compose -f docker-compose.pilot.yml up -d
@@ -118,6 +129,25 @@ clean: ## Clean up containers and volumes
 logs: ## Show application logs
 	docker-compose logs -f
 
+# Build and Package
+build-wheels: ## Build Python wheels and source distribution
+	@echo "🔨 Building Python wheels..."
+	python scripts/build_wheels.py --build-all
+	@echo "✅ Wheels built successfully"
+
+build-docker-images: ## Build production Docker images
+	@echo "🐳 Building Docker images..."
+	docker build -t betflow-engine:0.9.0 ./engine
+	docker build -t betflow-api:0.9.0 ./api
+	docker build -t betflow-web:0.9.0 ./web
+	@echo "✅ Docker images built"
+
+package: build-wheels build-docker-images ## Build all packages
+	@echo "📦 All packages built successfully"
+
 # CI/CD
 ci: test lint bench ## Run full CI pipeline
 	@echo "✅ CI pipeline complete"
+
+ci-build: ci package ## Run CI pipeline and build packages
+	@echo "✅ CI build pipeline complete"

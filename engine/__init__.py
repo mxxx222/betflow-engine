@@ -57,14 +57,26 @@ class BetFlowEngine:
     Main engine class providing Python interface to Mojo calculations.
     """
 
-    def __init__(self):
+    def __init__(self, enable_warmup: bool = True, cpu_affinity: Optional[List[int]] = None):
         global USE_MOJO
         self.team_ratings: Dict[str, float] = {}
         self.player_ratings: Dict[str, float] = {}
         self._mojo_engine = None
+        self._warmed_up = False
+        
+        # Set CPU affinity if specified
+        if cpu_affinity:
+            self._set_cpu_affinity(cpu_affinity)
+        
         if USE_MOJO:
             try:
                 self._mojo_engine = mojo_engine.BetFlowEngine()
+                print("Mojo engine initialized successfully")
+                
+                # Perform warmup if enabled
+                if enable_warmup:
+                    self._warmup_engine()
+                    
             except Exception as e:
                 print(f"Warning: Failed to initialize Mojo engine: {e}")
                 USE_MOJO = False
@@ -373,6 +385,7 @@ class BetFlowEngine:
             "version": "0.9.0",
             "use_mojo": USE_MOJO,
             "mojo_available": self._mojo_engine is not None,
+            "warmed_up": self._warmed_up,
             "timestamp": datetime.utcnow().isoformat()
         }
 
@@ -391,3 +404,107 @@ class BetFlowEngine:
             health["error"] = str(e)
 
         return health
+    
+    def _set_cpu_affinity(self, cpu_list: List[int]):
+        """Set CPU affinity for the current process."""
+        try:
+            import psutil
+            import os
+            
+            process = psutil.Process(os.getpid())
+            process.cpu_affinity(cpu_list)
+            print(f"CPU affinity set to cores: {cpu_list}")
+            
+        except ImportError:
+            print("Warning: psutil not available, cannot set CPU affinity")
+        except Exception as e:
+            print(f"Warning: Failed to set CPU affinity: {e}")
+    
+    def _warmup_engine(self):
+        """Perform engine warmup to reduce cold start latency."""
+        print("Warming up BetFlow Engine...")
+        
+        try:
+            import time
+            
+            warmup_start = time.perf_counter()
+            
+            # Warmup calculations with typical values
+            warmup_operations = [
+                # EV calculations
+                (lambda: self.calc_ev(0.5, 2.0), "EV calculation"),
+                (lambda: self.calc_ev(0.6, 1.8), "EV calculation"),
+                (lambda: self.calc_ev(0.4, 2.5), "EV calculation"),
+                
+                # Poisson calculations
+                (lambda: self.calc_poisson(1.5, 1.2, 3), "Poisson calculation"),
+                (lambda: self.calc_poisson(2.0, 1.8, 4), "Poisson calculation"),
+                (lambda: self.calc_poisson(1.0, 1.0, 3), "Poisson calculation"),
+                
+                # Match predictions
+                (lambda: self.predict_match("Team A", "Team B", "premier_league"), "Match prediction"),
+                (lambda: self.predict_match("Home", "Away", "la_liga"), "Match prediction"),
+            ]
+            
+            # ELO updates
+            sample_matches = [
+                {"home_team": "Arsenal", "away_team": "Chelsea", "home_score": 2, "away_score": 1, "league": "premier_league"},
+                {"home_team": "Barcelona", "away_team": "Real Madrid", "home_score": 1, "away_score": 1, "league": "la_liga"},
+                {"home_team": "Bayern", "away_team": "Dortmund", "home_score": 3, "away_score": 0, "league": "bundesliga"},
+            ]
+            
+            for match_data in sample_matches:
+                match = MatchResult(
+                    home_team=match_data["home_team"],
+                    away_team=match_data["away_team"],
+                    home_score=match_data["home_score"],
+                    away_score=match_data["away_score"],
+                    league=match_data["league"],
+                    date=datetime.utcnow()
+                )
+                warmup_operations.append((lambda m=match: self.update_elo(m), "ELO update"))
+            
+            # Execute warmup operations
+            successful_operations = 0
+            for operation, name in warmup_operations:
+                try:
+                    operation()
+                    successful_operations += 1
+                except Exception as e:
+                    print(f"Warning: Warmup {name} failed: {e}")
+            
+            warmup_duration = (time.perf_counter() - warmup_start) * 1000
+            
+            self._warmed_up = True
+            print(f"Engine warmup completed: {successful_operations}/{len(warmup_operations)} operations successful in {warmup_duration:.1f}ms")
+            
+            # Cache common calculations for faster access
+            self._cache_common_calculations()
+            
+        except Exception as e:
+            print(f"Warning: Engine warmup failed: {e}")
+    
+    def _cache_common_calculations(self):
+        """Pre-calculate and cache common values."""
+        try:
+            # Pre-calculate common Poisson probabilities
+            common_rates = [(1.0, 1.0), (1.5, 1.2), (2.0, 1.8), (1.2, 1.5), (1.8, 2.0)]
+            
+            for home_rate, away_rate in common_rates:
+                # This will cache the calculations in Mojo if available
+                self.calc_poisson(home_rate, away_rate, 3)
+            
+            # Pre-calculate common EV values
+            common_ev_pairs = [(0.5, 2.0), (0.6, 1.8), (0.4, 2.5), (0.3, 3.0), (0.7, 1.5)]
+            
+            for prob, odds in common_ev_pairs:
+                self.calc_ev(prob, odds)
+            
+            print("Common calculations cached for faster access")
+            
+        except Exception as e:
+            print(f"Warning: Failed to cache common calculations: {e}")
+    
+    def is_warmed_up(self) -> bool:
+        """Check if engine has been warmed up."""
+        return self._warmed_up
