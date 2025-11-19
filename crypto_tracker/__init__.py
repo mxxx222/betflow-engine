@@ -10,6 +10,7 @@ Based on veteran trader insights for edge detection in 2025 crypto markets.
 __version__ = "1.0.0"
 __author__ = "BetFlow Engine Team"
 
+from crypto_tracker.tracker import CryptoTracker
 from crypto_tracker.services.whale_tracker import WhaleTracker
 from crypto_tracker.services.dex_scraper import DEXScraper
 from crypto_tracker.services.sentiment_tracker import SentimentTracker
@@ -19,6 +20,7 @@ from crypto_tracker.models.whale_activity import WhaleActivity
 from crypto_tracker.models.token_data import TokenData
 
 __all__ = [
+    "CryptoTracker",
     "WhaleTracker",
     "DEXScraper",
     "SentimentTracker",
