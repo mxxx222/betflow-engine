@@ -10,6 +10,7 @@ from sqlalchemy import select, func
 
 from ..models.models import Model
 from ..models.schemas import ModelStatusResponse
+from .ai_service import AIService
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class EngineService:
             self.engine = BetFlowEngine()
         except ImportError:
             self.engine = None
+
+        self.ai_service = AIService()
     
     async def get_model_status(self, db: AsyncSession) -> ModelStatusResponse:
         """Get model status and information."""
@@ -128,22 +131,38 @@ class EngineService:
             }
     
     async def predict_match_outcome(self, home_team: str, away_team: str,
-                                   league: str) -> Dict[str, float]:
-        """Predict match outcome probabilities."""
+                                    league: str) -> Dict[str, float]:
+        """Predict match outcome probabilities with AI enhancement."""
+        # Get traditional prediction
         if self.engine:
             home_win, draw, away_win = self.engine.predict_match(home_team, away_team, league)
-            return {
+            traditional = {
                 "home_win": home_win,
                 "draw": draw,
                 "away_win": away_win
             }
         else:
             # Fallback mock data
-            return {
+            traditional = {
                 "home_win": 0.45,
                 "draw": 0.25,
                 "away_win": 0.30
             }
+
+        # Get AI prediction
+        ai_prediction = await self.ai_service.predict_match_outcome(home_team, away_team, league)
+
+        if ai_prediction:
+            # Combine predictions: average traditional and AI
+            combined = {}
+            for key in ["home_win", "draw", "away_win"]:
+                combined[key] = (traditional[key] + ai_prediction[key]) / 2.0
+            logger.info(f"Combined prediction for {home_team} vs {away_team}: {combined}")
+            return combined
+        else:
+            # Return traditional prediction if AI fails
+            logger.info(f"AI prediction failed, using traditional: {traditional}")
+            return traditional
     
     def _poisson_probability(self, rate: float, k: int) -> float:
         """Calculate Poisson probability."""

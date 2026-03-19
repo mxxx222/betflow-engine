@@ -1,0 +1,70 @@
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+
+# SSH keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa
+id_rsa.pub
+
+# WiFi configurations
+wpa_supplicant.conf
+
+# Log files
+*.log
+logs/
+journal/
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build artifacts
+build/
+dist/
+*.deb
+*.rpm
+
+# Network captures
+*.pcap
+*.pcapng
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# Sensitive configuration
+config/secrets.yml
+config/private_key.pem
+
+# Raspberry Pi specific
+boot/
+rootfs/
+image.img
+*.img

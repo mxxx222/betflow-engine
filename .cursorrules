@@ -1,0 +1,12 @@
+# Cursor AI Configuration
+# Venice AI Uncensored Model Setup
+
+# Venice AI API Configuration
+VENICE_API_KEY=tDbTCV7ZH9TBtq3-8Wd9QYfk0VxKKX-vObl6amumBz
+VENICE_BASE_URL=https://api.venice.ai/api/v1
+VENICE_MODEL=venice-uncensored
+
+# Model Settings
+# Use Venice AI uncensored model for unrestricted AI assistance
+# Compatible with OpenAI API format
+

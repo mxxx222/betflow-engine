@@ -42,6 +42,9 @@ black>=22.0.0
 flake8>=4.0.0
 mypy>=0.910
 
+# AI & ML
+openai>=1.0.0
+
 # Environment & Config
 python-dotenv>=1.0.0
 pydantic[email]>=2.4.0

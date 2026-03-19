@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     SPORTS_MONKS_KEY: Optional[str] = Field(default=None)
     BETFAIR_APP_KEY: Optional[str] = Field(default=None)
     BETFAIR_SESSION_TOKEN: Optional[str] = Field(default=None)
+
+    # AI Provider Configuration
+    AI_PROVIDER: str = Field(default="openrouter")
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None)
+    OPENROUTER_MODEL: str = Field(default="cognitivecomputations/dolphin-mistral-7b")
+    VENICE_API_KEY: Optional[str] = Field(default=None)
+    VENICE_MODEL: str = Field(default="venice-uncensored")
     
     # n8n Configuration
     N8N_WEBHOOK_URL: str = Field(default="http://n8n:5678")
@@ -46,7 +53,20 @@ class Settings(BaseSettings):
     # Development
     DEBUG: bool = Field(default=True)
     LOG_LEVEL: str = Field(default="INFO")
-    
+
+    # FAP (Field Audit Platform) Settings - Optional
+    FAP_DEBUG: Optional[bool] = Field(default=None)
+    FAP_SECRET_KEY: Optional[str] = Field(default=None)
+    FAP_DATABASE_URL: Optional[str] = Field(default=None)
+    FAP_DB_ENCRYPT_KEY: Optional[str] = Field(default=None)
+    FAP_MQTT_BROKER: Optional[str] = Field(default=None)
+    FAP_MQTT_PORT: Optional[int] = Field(default=None)
+    FAP_MQTT_USER: Optional[str] = Field(default=None)
+    FAP_MQTT_PASSWORD: Optional[str] = Field(default=None)
+    FAP_TRAFICOM_COMPLIANCE: Optional[bool] = Field(default=None)
+    FAP_GDPR_MODE: Optional[bool] = Field(default=None)
+    FAP_AUDIT_RETENTION: Optional[int] = Field(default=None)
+
     class Config:
         env_file = ".env"
         case_sensitive = True
