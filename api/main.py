@@ -17,6 +17,14 @@ import structlog
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
 
+# OpenTelemetry imports
+try:
+    from infra.opentelemetry.otel_config import setup_observability
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
+    logging.warning("OpenTelemetry not available, continuing without tracing")
+
 from .core.config import settings
 from .core.database import get_db, init_db
 from .core.security import verify_api_key, get_current_user
@@ -33,6 +41,7 @@ from .providers.local_csv import LocalCSVProvider
 from .providers.odds_api import OddsAPIProvider
 from .providers.sports_monks import SportsMonksProvider
 from .mvp_endpoints import router as mvp_router
+from .bulk_predict import router as bulk_router
 
 # Configure structured logging
 structlog.configure(
@@ -86,6 +95,16 @@ async def lifespan(app: FastAPI):
     app.state.signal_service = SignalService()
     logger.info("Services initialized")
     
+    # Initialize OpenTelemetry if available
+    if OTEL_AVAILABLE and os.getenv("ENABLE_TRACING", "false").lower() == "true":
+        try:
+            tracer, betflow_metrics = setup_observability(app, "betflow-api")
+            app.state.tracer = tracer
+            app.state.betflow_metrics = betflow_metrics
+            logger.info("OpenTelemetry initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenTelemetry: {e}")
+    
     yield
     
     logger.info("Shutting down BetFlow Engine API")
@@ -94,7 +113,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="BetFlow Engine API",
     description="Analytics-only sports data insights platform. Educational analytics only.",
-    version="1.0.0",
+    version="0.9.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
@@ -143,23 +162,149 @@ app.add_middleware(
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(AuditMiddleware)
 
-# Include MVP router
+# Include routers
 app.include_router(mvp_router, prefix="/mvp", tags=["mvp"])
+app.include_router(bulk_router, prefix="/v1", tags=["bulk"])
 
-# Health check endpoint
+# Health check endpoints
 @app.get("/health", response_model=HealthResponse, tags=["health"])
 async def health_check():
-    """Health check endpoint."""
+    """Basic health check endpoint."""
     return HealthResponse(
         status="healthy",
         timestamp=datetime.utcnow(),
-        version="1.0.0",
+        version="0.9.0",
         services={
             "database": "healthy",
             "engine": "healthy",
             "providers": "healthy"
         }
     )
+
+@app.get("/health/detailed", tags=["health"])
+async def detailed_health_check():
+    """Comprehensive health check with Mojo status and feature flags."""
+    try:
+        # Check engine health
+        engine_health = app.state.engine_service.engine.health_check() if app.state.engine_service.engine else {
+            "status": "degraded",
+            "use_mojo": False,
+            "mojo_available": False,
+            "error": "Engine not available"
+        }
+        
+        # Check database connectivity
+        try:
+            db = next(get_db())
+            await db.execute("SELECT 1")
+            db_status = "healthy"
+        except Exception as e:
+            db_status = f"unhealthy: {str(e)}"
+        
+        # Check providers
+        provider_status = {}
+        for name, provider in app.state.providers.items():
+            try:
+                # Simple connectivity check
+                provider_status[name] = "healthy"
+            except Exception as e:
+                provider_status[name] = f"unhealthy: {str(e)}"
+        
+        # Feature flags
+        feature_flags = {
+            "use_mojo": engine_health.get("use_mojo", False),
+            "mojo_available": engine_health.get("mojo_available", False),
+            "enable_metrics": True,
+            "enable_tracing": os.getenv("ENABLE_TRACING", "false").lower() == "true",
+            "pilot_mode": os.getenv("PILOT_TRAFFIC", "0") != "0",
+            "canary_deployment": os.getenv("CANARY_ENABLED", "false").lower() == "true"
+        }
+        
+        # Overall status
+        overall_status = "healthy"
+        if engine_health.get("status") != "healthy" or db_status != "healthy":
+            overall_status = "degraded"
+        if any("unhealthy" in status for status in provider_status.values()):
+            overall_status = "degraded"
+        
+        return {
+            "status": overall_status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "version": "0.9.0",
+            "services": {
+                "database": db_status,
+                "engine": engine_health,
+                "providers": provider_status
+            },
+            "feature_flags": feature_flags,
+            "environment": {
+                "pilot_traffic": os.getenv("PILOT_TRAFFIC", "0"),
+                "log_level": os.getenv("LOG_LEVEL", "INFO"),
+                "debug": settings.DEBUG
+            }
+        }
+        
+    except Exception as e:
+        logger.error("Health check failed", error=str(e))
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "version": "0.9.0",
+            "error": str(e)
+        }
+
+@app.get("/health/engine", tags=["health"])
+async def engine_health_check():
+    """Engine-specific health check with performance metrics."""
+    try:
+        if not app.state.engine_service.engine:
+            return {
+                "status": "unavailable",
+                "message": "Engine not initialized",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Get detailed engine health
+        health = app.state.engine_service.engine.health_check()
+        
+        # Add SLO compliance check
+        import time
+        start = time.perf_counter()
+        
+        # Quick performance tests
+        ev_result = app.state.engine_service.engine.calc_ev(0.6, 2.0)
+        ev_latency = (time.perf_counter() - start) * 1000
+        
+        start = time.perf_counter()
+        poisson_result = app.state.engine_service.engine.calc_poisson(1.5, 1.2, 3)
+        poisson_latency = (time.perf_counter() - start) * 1000
+        
+        # SLO compliance
+        slo_compliance = {
+            "ev_latency_slo": ev_latency < 1.0,  # < 1ms
+            "poisson_latency_slo": poisson_latency < 1.0,  # < 1ms
+            "overall_slo": ev_latency < 1.0 and poisson_latency < 1.0
+        }
+        
+        health.update({
+            "performance_metrics": {
+                "ev_calculation_ms": round(ev_latency, 3),
+                "poisson_calculation_ms": round(poisson_latency, 3),
+                "ev_result": round(ev_result, 6),
+                "poisson_sample": len(poisson_result)
+            },
+            "slo_compliance": slo_compliance
+        })
+        
+        return health
+        
+    except Exception as e:
+        logger.error("Engine health check failed", error=str(e))
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 # Events endpoints
 @app.get("/v1/events", response_model=List[EventResponse], tags=["events"])
@@ -175,12 +320,18 @@ async def get_events(
     REQUEST_COUNT.labels(method="GET", endpoint="/v1/events", status="200").inc()
     
     try:
+        # Use engine service for consistent processing
         events = await app.state.provider_service.get_events(
             sport=sport,
             date_from=date_from,
             date_to=date_to,
             league=league
         )
+        
+        # Add engine health status to response metadata
+        if hasattr(app.state, 'betflow_metrics') and events:
+            app.state.betflow_metrics.record_signal_generated("events", sport or "all")
+        
         return events
     except Exception as e:
         logger.error("Failed to fetch events", error=str(e))
@@ -214,8 +365,23 @@ async def query_signals(
     REQUEST_COUNT.labels(method="POST", endpoint="/v1/signals/query", status="200").inc()
     
     try:
+        # Ensure engine is available for signal generation
+        if not app.state.engine_service.engine:
+            raise HTTPException(status_code=503, detail="BetFlow Engine not available")
+        
         signals = await app.state.signal_service.query_signals(query, db)
+        
+        # Record metrics
+        if hasattr(app.state, 'betflow_metrics') and signals:
+            for signal in signals:
+                app.state.betflow_metrics.record_signal_generated(
+                    signal.get("market", "unknown"), 
+                    signal.get("sport", "unknown")
+                )
+        
         return signals
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to query signals", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to query signals")
@@ -287,9 +453,24 @@ async def compute_signals_internal(
 ):
     """Internal endpoint for signal computation (n8n workflows)."""
     try:
+        # Ensure engine is available
+        if not app.state.engine_service.engine:
+            raise HTTPException(status_code=503, detail="BetFlow Engine not available")
+        
         signals = await app.state.signal_service.compute_signals(event_ids, db)
         SIGNAL_GENERATED.labels(market="all", sport="all").inc(len(signals))
-        return {"signals_generated": len(signals)}
+        
+        # Record detailed metrics
+        if hasattr(app.state, 'betflow_metrics'):
+            app.state.betflow_metrics.record_signal_generated("all", "all")
+        
+        return {
+            "signals_generated": len(signals),
+            "engine_status": app.state.engine_service.engine.health_check()["status"],
+            "mojo_used": app.state.engine_service.engine.health_check().get("use_mojo", False)
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to compute signals", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to compute signals")

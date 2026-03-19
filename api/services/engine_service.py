@@ -21,7 +21,12 @@ class EngineService:
         try:
             from engine import BetFlowEngine
             self.engine = BetFlowEngine()
-        except ImportError:
+            logger.info(f"BetFlowEngine initialized successfully. Mojo available: {self.engine.health_check().get('mojo_available', False)}")
+        except ImportError as e:
+            logger.error(f"Failed to import BetFlowEngine: {e}")
+            self.engine = None
+        except Exception as e:
+            logger.error(f"Failed to initialize BetFlowEngine: {e}")
             self.engine = None
 
         self.ai_service = AIService()
@@ -70,38 +75,34 @@ class EngineService:
             raise
     
     async def calculate_ev(self, probability: float, odds: float) -> float:
-        """Calculate expected value."""
-        if self.engine:
+        """Calculate expected value using BetFlowEngine."""
+        if not self.engine:
+            raise RuntimeError("BetFlowEngine not available")
+        
+        try:
             return self.engine.calc_ev(probability, odds)
-        else:
-            # Fallback
-            if not 0.0 < probability < 1.0:
-                raise ValueError("Probability must be between 0 and 1")
-            if odds <= 1.0:
-                raise ValueError("Odds must be greater than 1.0")
-            return (probability * odds) - 1.0
+        except Exception as e:
+            logger.error(f"EV calculation failed: {e}")
+            raise
     
     async def calculate_poisson_probabilities(self, home_rate: float, away_rate: float,
                                             max_goals: int = 6) -> List[List[float]]:
-        """Calculate Poisson match outcome probabilities."""
-        if self.engine:
+        """Calculate Poisson match outcome probabilities using BetFlowEngine."""
+        if not self.engine:
+            raise RuntimeError("BetFlowEngine not available")
+        
+        try:
             return self.engine.calc_poisson(home_rate, away_rate, max_goals)
-        else:
-            # Fallback to Python implementation
-            import math
-            probabilities = []
-            for home_goals in range(max_goals + 1):
-                row = []
-                for away_goals in range(max_goals + 1):
-                    home_prob = self._poisson_probability(home_rate, home_goals)
-                    away_prob = self._poisson_probability(away_rate, away_goals)
-                    row.append(home_prob * away_prob)
-                probabilities.append(row)
-            return probabilities
+        except Exception as e:
+            logger.error(f"Poisson calculation failed: {e}")
+            raise
     
     async def update_elo_ratings(self, match_data: Dict[str, Any]) -> Dict[str, float]:
-        """Update ELO ratings based on match result."""
-        if self.engine:
+        """Update ELO ratings based on match result using BetFlowEngine."""
+        if not self.engine:
+            raise RuntimeError("BetFlowEngine not available")
+        
+        try:
             from datetime import datetime
             from engine import MatchResult
 
@@ -121,14 +122,9 @@ class EngineService:
                 "home_change": update.home_change,
                 "away_change": update.away_change
             }
-        else:
-            # Fallback mock data
-            return {
-                "home_rating": 1500.0,
-                "away_rating": 1500.0,
-                "home_change": 0.0,
-                "away_change": 0.0
-            }
+        except Exception as e:
+            logger.error(f"ELO calculation failed: {e}")
+            raise
     
     async def predict_match_outcome(self, home_team: str, away_team: str,
                                     league: str) -> Dict[str, float]:
