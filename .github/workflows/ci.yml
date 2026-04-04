@@ -86,7 +86,7 @@ jobs:
         python benchmarks.py
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         files: ./api/coverage.xml,./engine/coverage.xml
         fail_ci_if_error: true
